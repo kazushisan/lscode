@@ -1,0 +1,20 @@
+{
+  "name": "lscode",
+  "version": "0.1.0",
+  "description": "TypeScript's LanguageService for AI coding agents",
+  "homepage": "https://github.com/kazushisan/lscode#readme",
+  "bugs": {
+    "url": "https://github.com/kazushisan/lscode/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kazushisan/lscode.git"
+  },
+  "license": "MIT",
+  "author": "Kazushi Konosu",
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
