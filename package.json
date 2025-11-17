@@ -13,7 +13,9 @@
   "author": "Kazushi Konosu",
   "type": "module",
   "main": "./dist/main.js",
-  "bin": "./dist/cli.js",
+  "bin": {
+    "lscode": "dist/cli.js"
+  },
   "files": [
     "dist"
   ],
