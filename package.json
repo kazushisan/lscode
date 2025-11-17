@@ -1,6 +1,5 @@
 {
   "name": "lscode",
-  "version": "0.1.0",
   "description": "TypeScript's LanguageService for AI coding agents",
   "homepage": "https://github.com/kazushisan/lscode#readme",
   "bugs": {
