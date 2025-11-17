@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import path from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { createLanguageServiceHost } from './languageServiceHost.js';
 import { getPosition } from './position.js';
 
@@ -32,7 +32,7 @@ export const findReferences = (
   character: number, // 0-based
   fileName: string, // 0-based
   cwd: string,
-  tsConfig?: string,
+  tsconfig?: string,
 ) => {
   const content = ts.sys.readFile(fileName);
   if (content === undefined) {
@@ -40,15 +40,13 @@ export const findReferences = (
   }
   const position = getPosition(line, character, content);
 
-  const configPath = tsConfig
+  const configPath = tsconfig
     ? (() => {
-        const absoluteConfigPath = path.isAbsolute(tsConfig)
-          ? tsConfig
-          : path.join(cwd, tsConfig);
+        const absoluteConfigPath = resolve(cwd, tsconfig);
 
         if (!ts.sys.fileExists(absoluteConfigPath)) {
           throw new FindReferencesError(
-            `TypeScript config file not found: ${tsConfig}`,
+            `TypeScript config file not found: ${tsconfig}`,
             ERROR_TYPE.TSCONFIG_NOT_FOUND,
           );
         }
@@ -59,7 +57,7 @@ export const findReferences = (
   const { options, fileNames } = ts.parseJsonConfigFileContent(
     configPath ? ts.readConfigFile(configPath, ts.sys.readFile).config : {},
     ts.sys,
-    configPath ? path.dirname(configPath) : cwd,
+    configPath ? dirname(configPath) : cwd,
   );
 
   if (configPath && !fileNames.includes(fileName)) {
