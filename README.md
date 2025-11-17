@@ -5,7 +5,24 @@
 ## Install
 
 ```bash
-npm i lscode
+npm install lscode
+```
+
+## Usage
+
+```
+lscode - TypeScript's LanguageService for AI coding agents
+
+Usage: lscode <command> [options]
+
+Commands:
+  find-references <file#keyword>  Find all references to a keyword in a file
+
+Options:
+  --help, -h                      Show help
+  --version, -v                   Show version
+
+Run 'lscode <command> --help' for more information on a command.
 ```
 
 ## Author
