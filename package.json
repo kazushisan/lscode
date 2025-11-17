@@ -13,9 +13,17 @@
   "license": "MIT",
   "author": "Kazushi Konosu",
   "type": "module",
-  "main": "dist/main.js",
+  "main": "./dist/main.js",
+  "bin": "./dist/cli.js",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./dist/main.js"
+  },
+  "types": "dist/main.d.ts",
   "scripts": {
-    "build": "tsx build.ts",
+    "build": "rm -rf dist && tsx build.ts",
     "check": "tsc -b",
     "lint": "eslint",
     "test": "tsx --test"

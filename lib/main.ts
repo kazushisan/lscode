@@ -1,3 +1,1 @@
-import { add } from './add.js';
-
-console.log(add(1, 2));
+export { add } from './add.js';
