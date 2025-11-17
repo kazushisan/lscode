@@ -4,7 +4,7 @@ import { relative, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { getKeywordPosition } from './util/position.js';
+import { getKeywordPosition, PositionError } from './util/position.js';
 import { findReferences, FindReferencesError } from './util/findReferences.js';
 import {
   parseMainArgs,
@@ -102,6 +102,11 @@ try {
   }
 
   if (error instanceof FindReferencesError) {
+    console.error(`Error: ${error.message}`);
+    process.exit(1);
+  }
+
+  if (error instanceof PositionError) {
     console.error(`Error: ${error.message}`);
     process.exit(1);
   }

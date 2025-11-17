@@ -1,3 +1,20 @@
+export const ERROR_TYPE = {
+  LINE_OUT_OF_RANGE: 'LINE_OUT_OF_RANGE',
+  KEYWORD_NOT_FOUND: 'KEYWORD_NOT_FOUND',
+} as const;
+
+type PositionErrorType = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
+
+export class PositionError extends Error {
+  type: PositionErrorType;
+
+  constructor(message: string, type: PositionErrorType) {
+    super(message);
+    this.name = 'PositionError';
+    this.type = type;
+  }
+}
+
 export const getPosition = (
   line: number,
   character: number,
@@ -22,7 +39,10 @@ export const getPosition = (
     return position + character;
   }
 
-  throw new Error(`Line ${line} is out of range`);
+  throw new PositionError(
+    `Line ${line} is out of range`,
+    ERROR_TYPE.LINE_OUT_OF_RANGE,
+  );
 };
 
 interface KeywordPosition {
@@ -40,7 +60,10 @@ export const getKeywordPosition = (
   const index = content.indexOf(keyword);
 
   if (index === -1) {
-    throw new Error(`Keyword "${keyword}" not found in content`);
+    throw new PositionError(
+      `Keyword "${keyword}" not found in content`,
+      ERROR_TYPE.KEYWORD_NOT_FOUND,
+    );
   }
 
   // Count lines and calculate character position
