@@ -9,7 +9,8 @@ interface ReferenceLocation {
   character: number; // 0-based
 }
 
-const ERROR_TYPE = {
+// tsr-skip used in test
+export const ERROR_TYPE = {
   TSCONFIG_NOT_FOUND: 'TSCONFIG_NOT_FOUND',
   FILE_NOT_IN_PROJECT: 'FILE_NOT_IN_PROJECT',
 } as const;
