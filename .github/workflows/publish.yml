@@ -25,6 +25,4 @@ jobs:
             echo "TAG=latest" >> $GITHUB_ENV
           fi
 
-      - run: npm publish --provenance --access public --tag $TAG
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish --tag $TAG
