@@ -12,7 +12,12 @@ const fixturesDir = path.join(process.cwd(), 'test/fixtures/basic');
 describe('findReferences function', () => {
   it('should find all references to the add function in main.ts', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const references = findReferences(0, 13, mathFile, fixturesDir);
+    const references = findReferences({
+      line: 0,
+      character: 13,
+      fileName: mathFile,
+      cwd: fixturesDir,
+    });
 
     assert.strictEqual(references.length, 5);
 
@@ -24,7 +29,12 @@ describe('findReferences function', () => {
 
   it('should find references to multiply function', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const references = findReferences(4, 13, mathFile, fixturesDir);
+    const references = findReferences({
+      line: 4,
+      character: 13,
+      fileName: mathFile,
+      cwd: fixturesDir,
+    });
 
     assert.strictEqual(references.length, 4);
 
@@ -36,7 +46,12 @@ describe('findReferences function', () => {
 
   it('should find references to PI constant', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const references = findReferences(8, 13, mathFile, fixturesDir);
+    const references = findReferences({
+      line: 8,
+      character: 13,
+      fileName: mathFile,
+      cwd: fixturesDir,
+    });
 
     assert.strictEqual(references.length, 4);
 
@@ -48,7 +63,12 @@ describe('findReferences function', () => {
 
   it('should find references when starting from usage in main.ts', () => {
     const mainFile = path.join(fixturesDir, 'main.ts');
-    const references = findReferences(2, 16, mainFile, fixturesDir);
+    const references = findReferences({
+      line: 2,
+      character: 16,
+      fileName: mainFile,
+      cwd: fixturesDir,
+    });
 
     assert.strictEqual(references.length, 5);
 
@@ -60,7 +80,12 @@ describe('findReferences function', () => {
 
   it('should return correct line and character positions', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const references = findReferences(0, 13, mathFile, fixturesDir);
+    const references = findReferences({
+      line: 0,
+      character: 13,
+      fileName: mathFile,
+      cwd: fixturesDir,
+    });
 
     references.forEach((ref) => {
       assert.ok(typeof ref.line === 'number');
@@ -74,14 +99,24 @@ describe('findReferences function', () => {
 
   it('should handle references to imported symbols', () => {
     const mainFile = path.join(fixturesDir, 'main.ts');
-    const references = findReferences(0, 9, mainFile, fixturesDir);
+    const references = findReferences({
+      line: 0,
+      character: 9,
+      fileName: mainFile,
+      cwd: fixturesDir,
+    });
 
     assert.strictEqual(references.length, 5);
   });
 
   it('should find multiple usages in the same file', () => {
     const mainFile = path.join(fixturesDir, 'main.ts');
-    const references = findReferences(2, 16, mainFile, fixturesDir);
+    const references = findReferences({
+      line: 2,
+      character: 16,
+      fileName: mainFile,
+      cwd: fixturesDir,
+    });
 
     const mainFileRefs = references.filter((ref) =>
       ref.fileName.endsWith('main.ts'),
@@ -101,13 +136,13 @@ describe('findReferences function', () => {
 
     it('should work with custom tsconfig path', () => {
       const utilsFile = path.join(customConfigDir, 'utils.ts');
-      const references = findReferences(
-        0,
-        13,
-        utilsFile,
-        customConfigDir,
-        'tsconfig.custom.json',
-      );
+      const references = findReferences({
+        line: 0,
+        character: 13,
+        fileName: utilsFile,
+        cwd: customConfigDir,
+        tsconfig: 'tsconfig.custom.json',
+      });
 
       assert.ok(references.length > 0);
       const hasDefinition = references.some((ref) =>
@@ -121,7 +156,13 @@ describe('findReferences function', () => {
 
       assert.throws(
         () => {
-          findReferences(0, 13, mathFile, fixturesDir, 'nonexistent.json');
+          findReferences({
+            line: 0,
+            character: 13,
+            fileName: mathFile,
+            cwd: fixturesDir,
+            tsconfig: 'nonexistent.json',
+          });
         },
         (error: Error) => {
           assert.ok(error instanceof FindReferencesError);
@@ -140,7 +181,13 @@ describe('findReferences function', () => {
 
       assert.throws(
         () => {
-          findReferences(0, 13, excludedFile, excludedFileDir, 'tsconfig.json');
+          findReferences({
+            line: 0,
+            character: 13,
+            fileName: excludedFile,
+            cwd: excludedFileDir,
+            tsconfig: 'tsconfig.json',
+          });
         },
         (error: Error) => {
           assert.ok(error instanceof FindReferencesError);
@@ -156,13 +203,13 @@ describe('findReferences function', () => {
 
     it('should work with file in project when tsconfig is specified', () => {
       const includedFile = path.join(excludedFileDir, 'src/included.ts');
-      const references = findReferences(
-        0,
-        13,
-        includedFile,
-        excludedFileDir,
-        'tsconfig.json',
-      );
+      const references = findReferences({
+        line: 0,
+        character: 13,
+        fileName: includedFile,
+        cwd: excludedFileDir,
+        tsconfig: 'tsconfig.json',
+      });
 
       assert.ok(references.length > 0);
       const hasDefinition = references.some((ref) =>
@@ -173,7 +220,12 @@ describe('findReferences function', () => {
 
     it('should use tsconfig.json from cwd when tsConfig not specified', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
-      const references = findReferences(0, 13, mathFile, fixturesDir);
+      const references = findReferences({
+        line: 0,
+        character: 13,
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
 
       assert.ok(references.length > 0);
     });
@@ -184,13 +236,13 @@ describe('findReferences function', () => {
         customConfigDir,
         'tsconfig.custom.json',
       );
-      const references = findReferences(
-        0,
-        13,
-        utilsFile,
-        customConfigDir,
-        absoluteTsConfigPath,
-      );
+      const references = findReferences({
+        line: 0,
+        character: 13,
+        fileName: utilsFile,
+        cwd: customConfigDir,
+        tsconfig: absoluteTsConfigPath,
+      });
 
       assert.ok(references.length > 0);
     });
@@ -203,7 +255,12 @@ describe('findReferences function', () => {
       // This test verifies that when a tsconfig is auto-discovered
       // and the file IS included in the project, it should work correctly
       const mathFile = path.join(fixturesDir, 'math.ts');
-      const references = findReferences(0, 13, mathFile, fixturesDir);
+      const references = findReferences({
+        line: 0,
+        character: 13,
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
 
       assert.ok(references.length > 0);
       const hasDefinition = references.some((ref) =>
@@ -225,7 +282,12 @@ describe('findReferences function', () => {
       // and finds the project root tsconfig.json, which doesn't include this file
       assert.throws(
         () => {
-          findReferences(0, 13, mathFile, noTsConfigDir);
+          findReferences({
+            line: 0,
+            character: 13,
+            fileName: mathFile,
+            cwd: noTsConfigDir,
+          });
         },
         (error: Error) => {
           assert.ok(error instanceof FindReferencesError);

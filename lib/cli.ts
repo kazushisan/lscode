@@ -49,13 +49,13 @@ const main = () => {
 
       const { line, character } = getKeywordPosition(keyword, content);
 
-      const references = findReferences(
+      const references = findReferences({
         line,
         character,
-        resolve(cwd, filePath),
+        fileName: resolve(cwd, filePath),
         cwd,
         tsconfig,
-      );
+      });
 
       // Output results (convert to 1-based)
       for (const ref of references) {

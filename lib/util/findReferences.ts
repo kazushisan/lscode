@@ -27,13 +27,19 @@ export class FindReferencesError extends Error {
   }
 }
 
-export const findReferences = (
-  line: number,
-  character: number, // 0-based
-  fileName: string, // 0-based
-  cwd: string,
-  tsconfig?: string,
-) => {
+export const findReferences = ({
+  line,
+  character,
+  fileName,
+  cwd,
+  tsconfig,
+}: {
+  line: number; // 0-based
+  character: number; // 0-based
+  fileName: string;
+  cwd: string;
+  tsconfig?: string;
+}) => {
   const content = ts.sys.readFile(fileName);
   if (content === undefined) {
     throw new Error(`Failed to read file: ${fileName}`);
