@@ -7,5 +7,10 @@ export default defineConfig([
   { ignores: ['dist'] },
   js.configs.recommended,
   tseslint.configs.recommended,
+  {
+    rules: {
+      '@typescript-eslint/no-shadow': 'error',
+    },
+  },
   prettier,
 ]);
