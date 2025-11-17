@@ -62,8 +62,7 @@ export const findReferences = (
     configPath ? path.dirname(configPath) : cwd,
   );
 
-  // If tsConfig is specified, check if fileName is in the project
-  if (tsConfig && !fileNames.includes(fileName)) {
+  if (configPath && !fileNames.includes(fileName)) {
     throw new FindReferencesError(
       `File is not part of the TypeScript project: ${fileName}`,
       ERROR_TYPE.FILE_NOT_IN_PROJECT,
