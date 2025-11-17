@@ -26,7 +26,8 @@
     "check": "tsc -b",
     "lint": "eslint",
     "test": "tsx --test '**/*.test.ts'",
-    "tsr": "tsr --project tsconfig.lib.json lib/main.ts lib/cli.ts"
+    "tsr": "tsr --project tsconfig.lib.json lib/main.ts lib/cli.ts",
+    "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
     "typescript": ">=5.0.0"
