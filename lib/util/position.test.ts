@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { getPosition } from './position.js';
+import { getPosition, getKeywordPosition } from './position.js';
 
 describe('getPosition function', () => {
   it('should calculate position at the start of first line', () => {
@@ -89,5 +89,94 @@ describe('getPosition function', () => {
     assert.strictEqual(getPosition(0, 14, content), 14);
     assert.strictEqual(getPosition(1, 2, content), 57);
     assert.strictEqual(getPosition(2, 0, content), 71);
+  });
+});
+
+describe('getKeywordPosition function', () => {
+  it('should find keyword at the start of content', () => {
+    const content = 'hello world';
+    const pos = getKeywordPosition('hello', content);
+    assert.strictEqual(pos.line, 0);
+    assert.strictEqual(pos.character, 0);
+  });
+
+  it('should find keyword in the middle of first line', () => {
+    const content = 'hello world';
+    const pos = getKeywordPosition('world', content);
+    assert.strictEqual(pos.line, 0);
+    assert.strictEqual(pos.character, 6);
+  });
+
+  it('should find keyword on second line', () => {
+    const content = 'hello\nworld';
+    const pos = getKeywordPosition('world', content);
+    assert.strictEqual(pos.line, 1);
+    assert.strictEqual(pos.character, 0);
+  });
+
+  it('should find keyword in the middle of second line', () => {
+    const content = 'hello\nworld foo';
+    const pos = getKeywordPosition('foo', content);
+    assert.strictEqual(pos.line, 1);
+    assert.strictEqual(pos.character, 6);
+  });
+
+  it('should find keyword across multiple lines', () => {
+    const content = 'line1\nline2\nline3';
+    const pos1 = getKeywordPosition('line1', content);
+    assert.strictEqual(pos1.line, 0);
+    assert.strictEqual(pos1.character, 0);
+
+    const pos2 = getKeywordPosition('line2', content);
+    assert.strictEqual(pos2.line, 1);
+    assert.strictEqual(pos2.character, 0);
+
+    const pos3 = getKeywordPosition('line3', content);
+    assert.strictEqual(pos3.line, 2);
+    assert.strictEqual(pos3.character, 0);
+  });
+
+  it('should find keyword in TypeScript code', () => {
+    const content =
+      'export const add = (a: number, b: number) => {\n  return a + b;\n};';
+    const pos = getKeywordPosition('add', content);
+    assert.strictEqual(pos.line, 0);
+    assert.strictEqual(pos.character, 13);
+  });
+
+  it('should find keyword with special characters', () => {
+    const content = 'const myVar = 123;\nlet anotherVar = 456;';
+    const pos = getKeywordPosition('myVar', content);
+    assert.strictEqual(pos.line, 0);
+    assert.strictEqual(pos.character, 6);
+  });
+
+  it('should find first occurrence of keyword when multiple exist', () => {
+    const content = 'const x = x + 1;';
+    const pos = getKeywordPosition('x', content);
+    assert.strictEqual(pos.line, 0);
+    assert.strictEqual(pos.character, 6);
+  });
+
+  it('should throw error when keyword not found', () => {
+    const content = 'hello world';
+    assert.throws(
+      () => getKeywordPosition('notfound', content),
+      /Keyword "notfound" not found in content/,
+    );
+  });
+
+  it('should handle empty lines before keyword', () => {
+    const content = 'line1\n\nline3';
+    const pos = getKeywordPosition('line3', content);
+    assert.strictEqual(pos.line, 2);
+    assert.strictEqual(pos.character, 0);
+  });
+
+  it('should find keyword at end of line', () => {
+    const content = 'hello world\nfoo bar';
+    const pos = getKeywordPosition('bar', content);
+    assert.strictEqual(pos.line, 1);
+    assert.strictEqual(pos.character, 4);
   });
 });
