@@ -5,7 +5,7 @@ import { cwd } from 'node:process';
 import ts from 'typescript';
 
 await build({
-  entryPoints: globSync('lib/**/*.ts'),
+  entryPoints: globSync('lib/**/*.ts').filter((it) => !it.endsWith('.test.ts')),
   outdir: 'dist',
   target: 'node22',
   platform: 'node',
