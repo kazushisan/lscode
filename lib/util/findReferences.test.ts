@@ -4,7 +4,7 @@ import {
   findReferences,
   FindReferencesError,
   ERROR_TYPE,
-} from '../lib/util/findReferences.js';
+} from './findReferences.js';
 import path from 'node:path';
 
 const fixturesDir = path.join(process.cwd(), 'test/fixtures/basic');
