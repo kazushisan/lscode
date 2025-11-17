@@ -23,18 +23,17 @@ export const findReferences = (
 
   const configPath = ts.findConfigFile(cwd, ts.sys.fileExists, 'tsconfig.json');
 
-  const parsedConfig = ts.parseJsonConfigFileContent(
+  const { options, fileNames } = ts.parseJsonConfigFileContent(
     configPath ? ts.readConfigFile(configPath, ts.sys.readFile).config : {},
     ts.sys,
     configPath ? path.dirname(configPath) : cwd,
   );
 
-  const compilerOptions = parsedConfig.options;
-  const rootFiles = parsedConfig.fileNames.includes(fileName)
-    ? parsedConfig.fileNames
-    : [...parsedConfig.fileNames, fileName];
+  const rootFiles = fileNames.includes(fileName)
+    ? fileNames
+    : [...fileNames, fileName];
 
-  const host = createLanguageServiceHost(rootFiles, compilerOptions, cwd);
+  const host = createLanguageServiceHost(rootFiles, options, cwd);
 
   const service = ts.createLanguageService(host);
 
@@ -42,22 +41,18 @@ export const findReferences = (
 
   const results: ReferenceLocation[] = [];
 
-  for (const { fileName, textSpan } of referencesInfo.flatMap(
-    (info) => info.references,
-  )) {
-    const sourceFile = service.getProgram()?.getSourceFile(fileName);
+  for (const item of referencesInfo.flatMap((info) => info.references)) {
+    const sourceFile = service.getProgram()?.getSourceFile(item.fileName);
     if (!sourceFile) {
       continue;
     }
 
-    const { line, character } = sourceFile.getLineAndCharacterOfPosition(
-      textSpan.start,
-    );
+    const res = sourceFile.getLineAndCharacterOfPosition(item.textSpan.start);
 
     results.push({
-      fileName,
-      line,
-      character,
+      fileName: item.fileName,
+      line: res.line,
+      character: res.character,
     });
   }
 
