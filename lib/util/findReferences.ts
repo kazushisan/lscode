@@ -64,7 +64,7 @@ export const findReferences = (
 
   if (configPath && !fileNames.includes(fileName)) {
     throw new FindReferencesError(
-      `File is not part of the TypeScript project: ${fileName}`,
+      `${fileName} is not part of the TypeScript project. Hint: use --tsconfig to specify the correct tsconfig file.`,
       ERROR_TYPE.FILE_NOT_IN_PROJECT,
     );
   }
