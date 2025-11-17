@@ -16,5 +16,5 @@
     "outDir": "node_modules/.tsc",
   },
   "include": ["lib/**/*"],
-  "exclude": ["**/*.test.ts"]
+  "exclude": ["**/*.test.ts", "test/fixtures/**"]
 }
