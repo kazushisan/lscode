@@ -1,4 +1,4 @@
-export const ERROR_TYPE = {
+const ERROR_TYPE = {
   LINE_OUT_OF_RANGE: 'LINE_OUT_OF_RANGE',
   KEYWORD_NOT_FOUND: 'KEYWORD_NOT_FOUND',
 } as const;
