@@ -2,9 +2,9 @@ import { parseArgs } from 'node:util';
 
 const KNOWN_COMMANDS = ['find-references'] as const;
 
-export type Command = (typeof KNOWN_COMMANDS)[number];
+type Command = (typeof KNOWN_COMMANDS)[number];
 
-export type MainArgs =
+type MainArgs =
   | {
       help: true;
     }
@@ -13,7 +13,7 @@ export type MainArgs =
       command: Command | null;
     };
 
-export type FindReferencesArgs =
+type FindReferencesArgs =
   | {
       help: true;
     }

@@ -25,7 +25,7 @@ export const getPosition = (
   throw new Error(`Line ${line} is out of range`);
 };
 
-export interface KeywordPosition {
+interface KeywordPosition {
   line: number; // 0-based
   character: number; // 0-based
 }

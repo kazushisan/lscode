@@ -3,19 +3,18 @@ import { dirname, resolve } from 'node:path';
 import { createLanguageServiceHost } from './languageServiceHost.js';
 import { getPosition } from './position.js';
 
-export interface ReferenceLocation {
+interface ReferenceLocation {
   fileName: string;
   line: number; // 0-based
   character: number; // 0-based
 }
 
-export const ERROR_TYPE = {
+const ERROR_TYPE = {
   TSCONFIG_NOT_FOUND: 'TSCONFIG_NOT_FOUND',
   FILE_NOT_IN_PROJECT: 'FILE_NOT_IN_PROJECT',
 } as const;
 
-export type FindReferencesErrorType =
-  (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
+type FindReferencesErrorType = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
 
 export class FindReferencesError extends Error {
   type: FindReferencesErrorType;
