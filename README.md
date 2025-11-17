@@ -1,5 +1,7 @@
 # lscode
 
+> TypeScript's LanguageService for AI Coding Agents
+
 ## Install
 
 ```bash
