@@ -15,5 +15,6 @@
     "noUncheckedIndexedAccess": true,
     "outDir": "node_modules/.tsc",
   },
-  "include": ["lib/**/*"]
+  "include": ["lib/**/*"],
+  "exclude": ["lib/**/*.test.ts"]
 }
