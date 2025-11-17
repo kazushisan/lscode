@@ -8,9 +8,10 @@ Commands:
 
 Options:
   --help, -h                      Show help
+  --version, -v                   Show version
 
 Run 'lscode <command> --help' for more information on a command.
-`;
+`.trim();
 
 export const FIND_REFERENCES_HELP = `
 lscode find-references - Find all references to a keyword in a file
@@ -27,4 +28,4 @@ Options:
 Examples:
   lscode find-references src/main.ts#myFunction
   lscode find-references src/main.ts#myFunction --tsconfig ./tsconfig.json
-`;
+`.trim();

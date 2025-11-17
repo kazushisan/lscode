@@ -1,6 +1,9 @@
 #! /usr/bin/env node
 import ts from 'typescript';
 import { relative, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { getKeywordPosition } from './util/position.js';
 import { findReferences, FindReferencesError } from './util/findReferences.js';
 import {
@@ -10,12 +13,25 @@ import {
 } from './util/args.js';
 import { MAIN_HELP, FIND_REFERENCES_HELP } from './util/help.js';
 
+const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+const packageJson = JSON.parse(
+  readFileSync(join(projectRoot, 'package.json'), 'utf-8'),
+);
+
+const version = packageJson.version;
+
 const main = () => {
   const argv = process.argv.slice(2);
   const mainArgs = parseMainArgs(argv);
 
-  if (mainArgs.help) {
+  if ('help' in mainArgs) {
     console.log(MAIN_HELP);
+    process.exit(0);
+  }
+
+  if ('version' in mainArgs) {
+    console.log(version);
     process.exit(0);
   }
 
@@ -32,7 +48,7 @@ const main = () => {
     case 'find-references': {
       const args = parseFindReferencesArgs(commandArgs);
 
-      if (args.help) {
+      if ('help' in args) {
         console.log(FIND_REFERENCES_HELP);
         return;
       }

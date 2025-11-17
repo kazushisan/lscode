@@ -9,7 +9,9 @@ type MainArgs =
       help: true;
     }
   | {
-      help: false;
+      version: true;
+    }
+  | {
       command: Command | null;
     };
 
@@ -18,7 +20,6 @@ type FindReferencesArgs =
       help: true;
     }
   | {
-      help: false;
       filePath: string;
       keyword: string;
       tsconfig?: string;
@@ -40,7 +41,6 @@ export const parseMainArgs = (argv: string[]): MainArgs => {
   if (firstArg && (KNOWN_COMMANDS as readonly string[]).includes(firstArg)) {
     return {
       command: firstArg as Command,
-      help: false,
     };
   }
 
@@ -51,10 +51,20 @@ export const parseMainArgs = (argv: string[]): MainArgs => {
         type: 'boolean',
         short: 'h',
       },
+      version: {
+        type: 'boolean',
+        short: 'v',
+      },
     },
     allowPositionals: true,
     strict: false, // Allow unknown options to be passed to sub-commands
   });
+
+  if (values.version) {
+    return {
+      version: true,
+    };
+  }
 
   if (values.help || positionals.length === 0) {
     return {
@@ -67,13 +77,11 @@ export const parseMainArgs = (argv: string[]): MainArgs => {
   if (command && (KNOWN_COMMANDS as readonly string[]).includes(command)) {
     return {
       command: command as Command,
-      help: false,
     };
   }
 
   return {
     command: null,
-    help: false,
   };
 };
 
@@ -129,6 +137,5 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
     filePath,
     keyword,
     tsconfig: values.tsconfig,
-    help: false,
   };
 };
