@@ -1,10 +1,8 @@
 #! /usr/bin/env node
-import ts from 'typescript';
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { getKeywordPosition, PositionError } from './util/position.js';
 import { findReferences, FindReferencesError } from './util/findReferences.js';
 import {
   parseMainArgs,
@@ -54,21 +52,12 @@ const main = () => {
         return;
       }
 
-      const { filePath, keyword, tsconfig } = args;
+      const { filePath, symbol, tsconfig } = args;
 
       const cwd = process.cwd();
 
-      const content = ts.sys.readFile(resolve(cwd, filePath));
-
-      if (typeof content === 'undefined') {
-        throw new Error(`Failed to read file: ${filePath}`);
-      }
-
-      const { line, character } = getKeywordPosition(keyword, content);
-
       const references = findReferences({
-        line,
-        character,
+        symbol,
         fileName: resolve(cwd, filePath),
         cwd,
         tsconfig,
@@ -99,11 +88,6 @@ try {
   }
 
   if (error instanceof FindReferencesError) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
-  }
-
-  if (error instanceof PositionError) {
     console.error(`Error: ${error.message}`);
     process.exit(1);
   }

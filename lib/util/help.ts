@@ -4,7 +4,7 @@ lscode - TypeScript's LanguageService for AI coding agents
 Usage: lscode <command> [options]
 
 Commands:
-  find-references <file#keyword>  Find all references to a keyword in a file
+  find-references <file#symbol>  Find all references to a symbol in a file
 
 Options:
   --help, -h                      Show help
@@ -14,12 +14,12 @@ Run 'lscode <command> --help' for more information on a command.
 `.trim();
 
 export const FIND_REFERENCES_HELP = `
-lscode find-references - Find all references to a keyword in a file
+lscode find-references - Find all references to a symbol in a file
 
-Usage: lscode find-references <file#keyword> [options]
+Usage: lscode find-references <file#symbol> [options]
 
 Arguments:
-  <file#keyword>                  File path and keyword in format: path/to/file.ts#keyword
+  <file#symbol>                  File path and symbol in format: path/to/file.ts#symbol
 
 Options:
   --tsconfig <path>               Path to tsconfig.json file

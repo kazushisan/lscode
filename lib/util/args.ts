@@ -21,7 +21,7 @@ type FindReferencesArgs =
     }
   | {
       filePath: string;
-      keyword: string;
+      symbol: string;
       tsconfig?: string;
     };
 
@@ -108,7 +108,7 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
 
   if (positionals.length === 0) {
     throw new ArgsError(
-      'Missing required argument <file#keyword>',
+      'Missing required argument <file#symbol>',
       'find-references',
     );
   }
@@ -118,24 +118,24 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
 
   if (hashIndex === -1) {
     throw new ArgsError(
-      'Invalid argument format. Expected: path/to/file.ts#keyword',
+      'Invalid argument format. Expected: path/to/file.ts#symbol',
       'find-references',
     );
   }
 
   const filePath = arg.substring(0, hashIndex);
-  const keyword = arg.substring(hashIndex + 1);
+  const symbol = arg.substring(hashIndex + 1);
 
-  if (!filePath || !keyword) {
+  if (!filePath || !symbol) {
     throw new ArgsError(
-      'Invalid argument format. Expected: path/to/file.ts#keyword',
+      'Invalid argument format. Expected: path/to/file.ts#symbol',
       'find-references',
     );
   }
 
   return {
     filePath,
-    keyword,
+    symbol,
     tsconfig: values.tsconfig,
   };
 };
