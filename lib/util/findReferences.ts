@@ -1,7 +1,7 @@
 import ts from 'typescript';
 import { dirname, resolve } from 'node:path';
 import { createLanguageServiceHost } from './languageServiceHost.js';
-import { getPosition } from './position.js';
+import { findSymbol } from './symbol.js';
 
 interface ReferenceLocation {
   fileName: string;
@@ -13,6 +13,7 @@ interface ReferenceLocation {
 export const ERROR_TYPE = {
   TSCONFIG_NOT_FOUND: 'TSCONFIG_NOT_FOUND',
   FILE_NOT_IN_PROJECT: 'FILE_NOT_IN_PROJECT',
+  SYMBOL_NOT_FOUND: 'SYMBOL_NOT_FOUND',
 } as const;
 
 type FindReferencesErrorType = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
@@ -28,14 +29,12 @@ export class FindReferencesError extends Error {
 }
 
 export const findReferences = ({
-  line,
-  character,
+  symbol,
   fileName,
   cwd,
   tsconfig,
 }: {
-  line: number; // 0-based
-  character: number; // 0-based
+  symbol: string;
   fileName: string;
   cwd: string;
   tsconfig?: string;
@@ -44,7 +43,6 @@ export const findReferences = ({
   if (content === undefined) {
     throw new Error(`Failed to read file: ${fileName}`);
   }
-  const position = getPosition(line, character, content);
 
   const configPath = tsconfig
     ? (() => {
@@ -80,6 +78,34 @@ export const findReferences = ({
   const host = createLanguageServiceHost(rootFiles, options, cwd);
 
   const service = ts.createLanguageService(host);
+  const program = service.getProgram();
+
+  if (!program) {
+    throw new Error('Failed to create program');
+  }
+
+  const symbols = findSymbol(program, fileName, symbol);
+
+  if (symbols.length === 0) {
+    throw new FindReferencesError(
+      `Symbol '${symbol}' not found in ${fileName}`,
+      ERROR_TYPE.SYMBOL_NOT_FOUND,
+    );
+  }
+
+  // Use the first symbol (if multiple found, use the first one)
+  const targetSymbol = symbols[0]!;
+  const declarations = targetSymbol.getDeclarations();
+
+  if (!declarations || declarations.length === 0) {
+    throw new FindReferencesError(
+      `Symbol '${symbol}' not found in ${fileName}`,
+      ERROR_TYPE.SYMBOL_NOT_FOUND,
+    );
+  }
+
+  const firstDeclaration = declarations[0]!;
+  const position = firstDeclaration.getStart();
 
   const referencesInfo = service.findReferences(fileName, position) || [];
 
