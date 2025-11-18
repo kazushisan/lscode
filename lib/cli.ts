@@ -1,5 +1,5 @@
 #! /usr/bin/env node
-import { relative, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -10,6 +10,7 @@ import {
   ArgsError,
 } from './util/args.js';
 import { MAIN_HELP, FIND_REFERENCES_HELP } from './util/help.js';
+import { logFindReferences } from './util/log.js';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -62,11 +63,7 @@ const main = () => {
         tsconfig,
       });
 
-      // Output results (convert to 1-based)
-      for (const ref of references) {
-        const relativePath = relative(cwd, ref.fileName);
-        console.log(`${relativePath}:${ref.line + 1}:${ref.character + 1}`);
-      }
+      logFindReferences(references, cwd);
       break;
     }
     default: {
