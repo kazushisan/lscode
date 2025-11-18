@@ -6,13 +6,13 @@ interface Reference {
   character: number;
 }
 
-export const logFindReferences = (
+export const formatFindReferences = (
   references: Reference[],
   cwd: string,
-): void => {
-  // Output results (convert to 1-based)
-  for (const ref of references) {
+): string[] => {
+  // Format results (convert to 1-based)
+  return references.map((ref) => {
     const relativePath = relative(cwd, ref.fileName);
-    console.log(`${relativePath}:${ref.line + 1}:${ref.character + 1}`);
-  }
+    return `${relativePath}:${ref.line + 1}:${ref.character + 1}`;
+  });
 };

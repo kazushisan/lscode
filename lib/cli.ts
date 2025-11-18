@@ -10,7 +10,7 @@ import {
   ArgsError,
 } from './util/args.js';
 import { MAIN_HELP, FIND_REFERENCES_HELP } from './util/help.js';
-import { logFindReferences } from './util/log.js';
+import { formatFindReferences } from './util/format.js';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -63,7 +63,8 @@ const main = () => {
         tsconfig,
       });
 
-      logFindReferences(references, cwd);
+      const lines = formatFindReferences(references, cwd);
+      lines.forEach((line) => console.log(line));
       break;
     }
     default: {
