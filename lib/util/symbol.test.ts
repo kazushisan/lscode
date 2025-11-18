@@ -61,7 +61,8 @@ describe('findSymbol function', () => {
       });
 
       const symbols = findSymbol(program, 'test.ts', 'myVar');
-      assert.strictEqual(symbols.length, 1);
+      // Should find the destructured variable and the property in the object literal
+      assert.strictEqual(symbols.length, 2);
       assert.strictEqual(symbols[0]?.getName(), 'myVar');
     });
   });
@@ -314,6 +315,76 @@ namespace N {
       const symbols = findSymbol(program, 'test.ts', 'MyClass');
       assert.strictEqual(symbols.length, 1);
       assert.strictEqual(symbols[0]?.getName(), 'MyClass');
+    });
+  });
+
+  describe('Imported and used symbols', () => {
+    it('should find imported symbol when searching in file that imports it', () => {
+      const program = createProgram({
+        'math.ts': 'export const add = (a: number, b: number) => a + b;',
+        'main.ts': 'import { add } from "./math"; const result = add(1, 2);',
+      });
+
+      const symbols = findSymbol(program, 'main.ts', 'add');
+      assert.strictEqual(symbols.length, 1);
+      assert.strictEqual(symbols[0]?.getName(), 'add');
+    });
+
+    it('should find imported symbol with alias', () => {
+      const program = createProgram({
+        'utils.ts': 'export const value = 1;',
+        'main.ts':
+          'import { value as aliasedValue } from "./utils"; console.log(aliasedValue);',
+      });
+
+      const symbols = findSymbol(program, 'main.ts', 'aliasedValue');
+      assert.strictEqual(symbols.length, 1);
+      assert.strictEqual(symbols[0]?.getName(), 'aliasedValue');
+    });
+
+    it('should prefer declarations over usages', () => {
+      const program = createProgram({
+        'test.ts': `const test = 1;
+const result = test + 1;`,
+      });
+
+      // Should find the declaration, not the usage
+      const symbols = findSymbol(program, 'test.ts', 'test');
+      assert.strictEqual(symbols.length, 1);
+      assert.strictEqual(symbols[0]?.getName(), 'test');
+    });
+
+    it('should find multiple imported symbols with same name', () => {
+      const program = createProgram({
+        'a.ts': 'export const value = 1;',
+        'b.ts': 'export const value = 2;',
+        'main.ts':
+          'import { value as valueA } from "./a"; import { value as valueB } from "./b"; console.log(valueA, valueB);',
+      });
+
+      // Should find both imported symbols when searching for their aliases
+      const symbolsA = findSymbol(program, 'main.ts', 'valueA');
+      assert.strictEqual(symbolsA.length, 1);
+      assert.strictEqual(symbolsA[0]?.getName(), 'valueA');
+
+      const symbolsB = findSymbol(program, 'main.ts', 'valueB');
+      assert.strictEqual(symbolsB.length, 1);
+      assert.strictEqual(symbolsB[0]?.getName(), 'valueB');
+    });
+
+    it('should find symbol in file with both declaration and usage', () => {
+      const program = createProgram({
+        'test.ts': `const myVar = 1;
+function test() {
+  const result = myVar + 1;
+  return result;
+}`,
+      });
+
+      // Should find the declaration, not just the usage
+      const symbols = findSymbol(program, 'test.ts', 'myVar');
+      assert.strictEqual(symbols.length, 1);
+      assert.strictEqual(symbols[0]?.getName(), 'myVar');
     });
   });
 });

@@ -60,31 +60,6 @@ export const findSymbol = (
       continue;
     }
 
-    const declarations = symbol.getDeclarations();
-    if (!declarations || declarations.length === 0) {
-      continue;
-    }
-
-    const isDeclarationName = declarations.some((decl) => {
-      if (
-        ts.isVariableDeclaration(decl) ||
-        ts.isFunctionDeclaration(decl) ||
-        ts.isClassDeclaration(decl) ||
-        ts.isInterfaceDeclaration(decl) ||
-        ts.isTypeAliasDeclaration(decl) ||
-        ts.isEnumDeclaration(decl) ||
-        ts.isParameter(decl) ||
-        ts.isBindingElement(decl)
-      ) {
-        return decl.name === node;
-      }
-      return false;
-    });
-
-    if (!isDeclarationName) {
-      continue;
-    }
-
     seenSymbols.add(symbol);
     symbols.push(symbol);
   }
