@@ -1,0 +1,23 @@
+changelog:
+  categories:
+    - title: 🚀 Features
+      labels:
+        - feature
+    - title: 🐛 Bug Fixes
+      labels:
+        - bug
+    - title: 🧹 Chores
+      labels:
+        - chore
+    - title: 📖 Documentation
+      labels:
+        - documentation
+    - title: Other Changes
+      labels:
+        - "*"
+      exclude:
+        labels:
+          - feature
+          - bug
+          - chore
+          - documentation
