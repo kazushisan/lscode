@@ -56,14 +56,20 @@ const main = () => {
 
       const cwd = process.cwd();
 
-      const references = findReferences({
+      const result = findReferences({
         symbol,
         fileName: resolve(cwd, filePath),
         cwd,
         tsconfig,
       });
 
-      const lines = formatFindReferences(references, cwd);
+      const lines = formatFindReferences({
+        references: result.references,
+        symbols: result.symbols,
+        index: result.index,
+        cwd,
+        symbol,
+      });
       lines.forEach((line) => console.log(line));
       break;
     }

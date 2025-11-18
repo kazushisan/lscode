@@ -12,7 +12,7 @@ const fixturesDir = path.join(process.cwd(), 'test/fixtures/basic');
 describe('findReferences function', () => {
   it('should find all references to the add function in main.ts', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'add',
       fileName: mathFile,
       cwd: fixturesDir,
@@ -28,7 +28,7 @@ describe('findReferences function', () => {
 
   it('should find references to multiply function', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'multiply',
       fileName: mathFile,
       cwd: fixturesDir,
@@ -44,7 +44,7 @@ describe('findReferences function', () => {
 
   it('should find references to PI constant', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'PI',
       fileName: mathFile,
       cwd: fixturesDir,
@@ -60,7 +60,7 @@ describe('findReferences function', () => {
 
   it('should find references when starting from usage in main.ts', () => {
     const mainFile = path.join(fixturesDir, 'main.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'add',
       fileName: mainFile,
       cwd: fixturesDir,
@@ -76,7 +76,7 @@ describe('findReferences function', () => {
 
   it('should return correct line and character positions', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'add',
       fileName: mathFile,
       cwd: fixturesDir,
@@ -94,7 +94,7 @@ describe('findReferences function', () => {
 
   it('should handle references to imported symbols', () => {
     const mainFile = path.join(fixturesDir, 'main.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'add',
       fileName: mainFile,
       cwd: fixturesDir,
@@ -105,7 +105,7 @@ describe('findReferences function', () => {
 
   it('should find multiple usages in the same file', () => {
     const mainFile = path.join(fixturesDir, 'main.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'add',
       fileName: mainFile,
       cwd: fixturesDir,
@@ -152,7 +152,7 @@ describe('findReferences function', () => {
 
     it('should work with custom tsconfig path', () => {
       const utilsFile = path.join(customConfigDir, 'utils.ts');
-      const references = findReferences({
+      const { references } = findReferences({
         symbol: 'square',
         fileName: utilsFile,
         cwd: customConfigDir,
@@ -216,7 +216,7 @@ describe('findReferences function', () => {
 
     it('should work with file in project when tsconfig is specified', () => {
       const includedFile = path.join(excludedFileDir, 'src/included.ts');
-      const references = findReferences({
+      const { references } = findReferences({
         symbol: 'helper',
         fileName: includedFile,
         cwd: excludedFileDir,
@@ -232,7 +232,7 @@ describe('findReferences function', () => {
 
     it('should use tsconfig.json from cwd when tsConfig not specified', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
-      const references = findReferences({
+      const { references } = findReferences({
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -247,7 +247,7 @@ describe('findReferences function', () => {
         customConfigDir,
         'tsconfig.custom.json',
       );
-      const references = findReferences({
+      const { references } = findReferences({
         symbol: 'square',
         fileName: utilsFile,
         cwd: customConfigDir,
@@ -258,6 +258,107 @@ describe('findReferences function', () => {
     });
   });
 
+  describe('symbols field', () => {
+    it('should return symbols array with found symbols', () => {
+      const mathFile = path.join(fixturesDir, 'math.ts');
+      const result = findReferences({
+        symbol: 'add',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+
+      assert.ok(result.symbols);
+      assert.ok(Array.isArray(result.symbols));
+      assert.strictEqual(result.symbols.length, 1);
+
+      const symbolInfo = result.symbols[0]!;
+      assert.ok(typeof symbolInfo.character === 'number');
+      assert.ok(typeof symbolInfo.line === 'number');
+      assert.ok(typeof symbolInfo.code === 'string');
+      assert.ok(symbolInfo.line >= 0);
+      assert.ok(symbolInfo.character >= 0);
+    });
+
+    it('should have code field containing the entire line of symbol definition', () => {
+      const mathFile = path.join(fixturesDir, 'math.ts');
+      const result = findReferences({
+        symbol: 'add',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+
+      const symbolInfo = result.symbols[0]!;
+      assert.ok(symbolInfo.code.includes('add'));
+      assert.ok(symbolInfo.code.length > 0);
+    });
+
+    it('should return correct line and character for PI constant', () => {
+      const mathFile = path.join(fixturesDir, 'math.ts');
+      const result = findReferences({
+        symbol: 'PI',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+
+      assert.strictEqual(result.symbols.length, 1);
+      const symbolInfo = result.symbols[0]!;
+      assert.ok(symbolInfo.code.includes('PI'));
+      assert.strictEqual(symbolInfo.line, 8); // PI is on line 9 (0-based index 8)
+    });
+
+    it('should return correct line and character for multiply function', () => {
+      const mathFile = path.join(fixturesDir, 'math.ts');
+      const result = findReferences({
+        symbol: 'multiply',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+
+      assert.strictEqual(result.symbols.length, 1);
+      const symbolInfo = result.symbols[0]!;
+      assert.ok(symbolInfo.code.includes('multiply'));
+    });
+  });
+
+  describe('index field', () => {
+    it('should return index field set to 0', () => {
+      const mathFile = path.join(fixturesDir, 'math.ts');
+      const result = findReferences({
+        symbol: 'add',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+
+      assert.ok('index' in result);
+      assert.strictEqual(result.index, 0);
+    });
+
+    it('should always have index 0 for different symbols', () => {
+      const mathFile = path.join(fixturesDir, 'math.ts');
+
+      const addResult = findReferences({
+        symbol: 'add',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+      assert.strictEqual(addResult.index, 0);
+
+      const multiplyResult = findReferences({
+        symbol: 'multiply',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+      assert.strictEqual(multiplyResult.index, 0);
+
+      const piResult = findReferences({
+        symbol: 'PI',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+      assert.strictEqual(piResult.index, 0);
+    });
+  });
+
   describe('with auto-discovered tsconfig', () => {
     const noTsConfigDir = path.join(process.cwd(), 'test/fixtures/no-tsconfig');
 
@@ -265,7 +366,7 @@ describe('findReferences function', () => {
       // This test verifies that when a tsconfig is auto-discovered
       // and the file IS included in the project, it should work correctly
       const mathFile = path.join(fixturesDir, 'math.ts');
-      const references = findReferences({
+      const { references } = findReferences({
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,

@@ -2,11 +2,19 @@ import ts from 'typescript';
 import { dirname, resolve } from 'node:path';
 import { createLanguageServiceHost } from './languageServiceHost.js';
 import { findSymbol } from './symbol.js';
+import { getLineAtPosition } from './position.js';
 
 interface ReferenceLocation {
   fileName: string;
   line: number; // 0-based
   character: number; // 0-based
+}
+
+interface SymbolInfo {
+  fileName: string;
+  character: number; // 0-based
+  line: number; // 0-based
+  code: string; // entire line of the symbol's definition
 }
 
 // tsr-skip used in test
@@ -109,7 +117,7 @@ export const findReferences = ({
 
   const referencesInfo = service.findReferences(fileName, position) || [];
 
-  const results: ReferenceLocation[] = [];
+  const references: ReferenceLocation[] = [];
 
   for (const item of referencesInfo.flatMap((info) => info.references)) {
     const sourceFile = service.getProgram()?.getSourceFile(item.fileName);
@@ -119,12 +127,45 @@ export const findReferences = ({
 
     const res = sourceFile.getLineAndCharacterOfPosition(item.textSpan.start);
 
-    results.push({
+    references.push({
       fileName: item.fileName,
       line: res.line,
       character: res.character,
     });
   }
 
-  return results;
+  // Build symbols array from found symbols
+  const symbolsInfo: SymbolInfo[] = [];
+
+  for (const foundSymbol of symbols) {
+    const symbolDeclarations = foundSymbol.getDeclarations();
+    if (!symbolDeclarations || symbolDeclarations.length === 0) {
+      continue;
+    }
+
+    const declaration = symbolDeclarations[0]!;
+    const declarationSourceFile = declaration.getSourceFile();
+    const declarationPosition = declaration.getStart();
+    const { line, character } =
+      declarationSourceFile.getLineAndCharacterOfPosition(declarationPosition);
+
+    // Get the entire line text for context
+    const code = getLineAtPosition(
+      declarationSourceFile.text,
+      declarationPosition,
+    );
+
+    symbolsInfo.push({
+      fileName: declarationSourceFile.fileName,
+      character,
+      line,
+      code,
+    });
+  }
+
+  return {
+    references,
+    symbols: symbolsInfo,
+    index: 0,
+  };
 };
