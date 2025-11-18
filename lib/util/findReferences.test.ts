@@ -258,6 +258,107 @@ describe('findReferences function', () => {
     });
   });
 
+  describe('symbols field', () => {
+    it('should return symbols array with found symbols', () => {
+      const mathFile = path.join(fixturesDir, 'math.ts');
+      const result = findReferences({
+        symbol: 'add',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+
+      assert.ok(result.symbols);
+      assert.ok(Array.isArray(result.symbols));
+      assert.strictEqual(result.symbols.length, 1);
+
+      const symbolInfo = result.symbols[0]!;
+      assert.ok(typeof symbolInfo.character === 'number');
+      assert.ok(typeof symbolInfo.line === 'number');
+      assert.ok(typeof symbolInfo.code === 'string');
+      assert.ok(symbolInfo.line >= 0);
+      assert.ok(symbolInfo.character >= 0);
+    });
+
+    it('should have code field containing the entire line of symbol definition', () => {
+      const mathFile = path.join(fixturesDir, 'math.ts');
+      const result = findReferences({
+        symbol: 'add',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+
+      const symbolInfo = result.symbols[0]!;
+      assert.ok(symbolInfo.code.includes('add'));
+      assert.ok(symbolInfo.code.length > 0);
+    });
+
+    it('should return correct line and character for PI constant', () => {
+      const mathFile = path.join(fixturesDir, 'math.ts');
+      const result = findReferences({
+        symbol: 'PI',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+
+      assert.strictEqual(result.symbols.length, 1);
+      const symbolInfo = result.symbols[0]!;
+      assert.ok(symbolInfo.code.includes('PI'));
+      assert.strictEqual(symbolInfo.line, 8); // PI is on line 9 (0-based index 8)
+    });
+
+    it('should return correct line and character for multiply function', () => {
+      const mathFile = path.join(fixturesDir, 'math.ts');
+      const result = findReferences({
+        symbol: 'multiply',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+
+      assert.strictEqual(result.symbols.length, 1);
+      const symbolInfo = result.symbols[0]!;
+      assert.ok(symbolInfo.code.includes('multiply'));
+    });
+  });
+
+  describe('index field', () => {
+    it('should return index field set to 0', () => {
+      const mathFile = path.join(fixturesDir, 'math.ts');
+      const result = findReferences({
+        symbol: 'add',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+
+      assert.ok('index' in result);
+      assert.strictEqual(result.index, 0);
+    });
+
+    it('should always have index 0 for different symbols', () => {
+      const mathFile = path.join(fixturesDir, 'math.ts');
+
+      const addResult = findReferences({
+        symbol: 'add',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+      assert.strictEqual(addResult.index, 0);
+
+      const multiplyResult = findReferences({
+        symbol: 'multiply',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+      assert.strictEqual(multiplyResult.index, 0);
+
+      const piResult = findReferences({
+        symbol: 'PI',
+        fileName: mathFile,
+        cwd: fixturesDir,
+      });
+      assert.strictEqual(piResult.index, 0);
+    });
+  });
+
   describe('with auto-discovered tsconfig', () => {
     const noTsConfigDir = path.join(process.cwd(), 'test/fixtures/no-tsconfig');
 
