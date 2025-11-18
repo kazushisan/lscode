@@ -11,6 +11,7 @@ interface ReferenceLocation {
 }
 
 interface SymbolInfo {
+  fileName: string;
   character: number; // 0-based
   line: number; // 0-based
   code: string; // entire line of the symbol's definition
@@ -155,6 +156,7 @@ export const findReferences = ({
     );
 
     symbolsInfo.push({
+      fileName: declarationSourceFile.fileName,
       character,
       line,
       code,
