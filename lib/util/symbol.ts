@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { forwardMatch } from './text.js';
+import { forwardMatch } from './match.js';
 
 const getTokenAtPosition = (
   sourceFile: ts.SourceFile,

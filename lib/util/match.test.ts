@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { forwardMatch } from './text.js';
+import { forwardMatch } from './match.js';
 
 describe('forwardMatch function', () => {
   it('should find single occurrence of keyword', () => {
