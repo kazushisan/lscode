@@ -109,7 +109,7 @@ export const findReferences = ({
 
   const referencesInfo = service.findReferences(fileName, position) || [];
 
-  const results: ReferenceLocation[] = [];
+  const references: ReferenceLocation[] = [];
 
   for (const item of referencesInfo.flatMap((info) => info.references)) {
     const sourceFile = service.getProgram()?.getSourceFile(item.fileName);
@@ -119,12 +119,12 @@ export const findReferences = ({
 
     const res = sourceFile.getLineAndCharacterOfPosition(item.textSpan.start);
 
-    results.push({
+    references.push({
       fileName: item.fileName,
       line: res.line,
       character: res.character,
     });
   }
 
-  return results;
+  return { references };
 };

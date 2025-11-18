@@ -56,7 +56,7 @@ const main = () => {
 
       const cwd = process.cwd();
 
-      const references = findReferences({
+      const { references } = findReferences({
         symbol,
         fileName: resolve(cwd, filePath),
         cwd,

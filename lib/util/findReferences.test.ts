@@ -12,7 +12,7 @@ const fixturesDir = path.join(process.cwd(), 'test/fixtures/basic');
 describe('findReferences function', () => {
   it('should find all references to the add function in main.ts', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'add',
       fileName: mathFile,
       cwd: fixturesDir,
@@ -28,7 +28,7 @@ describe('findReferences function', () => {
 
   it('should find references to multiply function', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'multiply',
       fileName: mathFile,
       cwd: fixturesDir,
@@ -44,7 +44,7 @@ describe('findReferences function', () => {
 
   it('should find references to PI constant', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'PI',
       fileName: mathFile,
       cwd: fixturesDir,
@@ -60,7 +60,7 @@ describe('findReferences function', () => {
 
   it('should find references when starting from usage in main.ts', () => {
     const mainFile = path.join(fixturesDir, 'main.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'add',
       fileName: mainFile,
       cwd: fixturesDir,
@@ -76,7 +76,7 @@ describe('findReferences function', () => {
 
   it('should return correct line and character positions', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'add',
       fileName: mathFile,
       cwd: fixturesDir,
@@ -94,7 +94,7 @@ describe('findReferences function', () => {
 
   it('should handle references to imported symbols', () => {
     const mainFile = path.join(fixturesDir, 'main.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'add',
       fileName: mainFile,
       cwd: fixturesDir,
@@ -105,7 +105,7 @@ describe('findReferences function', () => {
 
   it('should find multiple usages in the same file', () => {
     const mainFile = path.join(fixturesDir, 'main.ts');
-    const references = findReferences({
+    const { references } = findReferences({
       symbol: 'add',
       fileName: mainFile,
       cwd: fixturesDir,
@@ -152,7 +152,7 @@ describe('findReferences function', () => {
 
     it('should work with custom tsconfig path', () => {
       const utilsFile = path.join(customConfigDir, 'utils.ts');
-      const references = findReferences({
+      const { references } = findReferences({
         symbol: 'square',
         fileName: utilsFile,
         cwd: customConfigDir,
@@ -216,7 +216,7 @@ describe('findReferences function', () => {
 
     it('should work with file in project when tsconfig is specified', () => {
       const includedFile = path.join(excludedFileDir, 'src/included.ts');
-      const references = findReferences({
+      const { references } = findReferences({
         symbol: 'helper',
         fileName: includedFile,
         cwd: excludedFileDir,
@@ -232,7 +232,7 @@ describe('findReferences function', () => {
 
     it('should use tsconfig.json from cwd when tsConfig not specified', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
-      const references = findReferences({
+      const { references } = findReferences({
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -247,7 +247,7 @@ describe('findReferences function', () => {
         customConfigDir,
         'tsconfig.custom.json',
       );
-      const references = findReferences({
+      const { references } = findReferences({
         symbol: 'square',
         fileName: utilsFile,
         cwd: customConfigDir,
@@ -265,7 +265,7 @@ describe('findReferences function', () => {
       // This test verifies that when a tsconfig is auto-discovered
       // and the file IS included in the project, it should work correctly
       const mathFile = path.join(fixturesDir, 'math.ts');
-      const references = findReferences({
+      const { references } = findReferences({
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
