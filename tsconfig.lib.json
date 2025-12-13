@@ -13,7 +13,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    "outDir": "node_modules/.tsc",
+    "outDir": "node_modules/.tsc"
   },
   "include": ["lib/**/*"],
   "exclude": ["**/*.test.ts", "test/fixtures/**"]
