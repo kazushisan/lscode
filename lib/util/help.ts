@@ -22,10 +22,12 @@ Arguments:
   <file#symbol>                  File path and symbol in format: path/to/file.ts#symbol
 
 Options:
+  -n <number>                     Index of the symbol to use (default: 0)
   --tsconfig <path>               Path to tsconfig.json file
   --help, -h                      Show help
 
 Examples:
   lscode find-references src/main.ts#myFunction
   lscode find-references src/main.ts#myFunction --tsconfig ./tsconfig.json
+  lscode find-references src/main.ts#myFunction -n 1
 `.trim();

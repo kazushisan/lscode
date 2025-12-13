@@ -52,21 +52,24 @@ const main = () => {
         return;
       }
 
-      const { filePath, symbol, tsconfig } = args;
+      const { filePath, symbol, tsconfig, n } = args;
 
       const cwd = process.cwd();
+
+      const symbolIndex = n !== undefined ? n : 0;
 
       const result = findReferences({
         symbol,
         fileName: resolve(cwd, filePath),
         cwd,
         tsconfig,
+        n: symbolIndex,
       });
 
       const lines = formatFindReferences({
         references: result.references,
         symbols: result.symbols,
-        index: result.index,
+        n: symbolIndex,
         cwd,
         symbol,
       });

@@ -4,7 +4,7 @@ import { defineConfig } from 'eslint/config';
 import prettier from 'eslint-plugin-prettier/recommended';
 
 export default defineConfig([
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'test/fixtures'] },
   js.configs.recommended,
   tseslint.configs.recommended,
   {

@@ -14,12 +14,13 @@ describe('formatFindReferences function', () => {
       symbol: 'add',
       fileName: mathFile,
       cwd: fixturesDir,
+      n: 0,
     });
 
     const formatted = formatFindReferences({
       references: result.references,
       symbols: result.symbols,
-      index: result.index,
+      n: 0,
       cwd: fixturesDir,
       symbol: 'add',
     });
@@ -27,6 +28,7 @@ describe('formatFindReferences function', () => {
     const expected = [
       'Found symbols:',
       `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
+      `${styleText('gray', 'math.ts:12:9:')} const ad${styleText('green', 'd =')} () => {};`,
       '',
       'References shown for symbol #0 at math.ts:1:14',
       `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
@@ -39,18 +41,49 @@ describe('formatFindReferences function', () => {
     assert.strictEqual(formatted.join('\n'), expected);
   });
 
+  it('should format references for add function with n=1', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const result = findReferences({
+      symbol: 'add',
+      fileName: mathFile,
+      cwd: fixturesDir,
+      n: 1,
+    });
+
+    const formatted = formatFindReferences({
+      references: result.references,
+      symbols: result.symbols,
+      n: 1,
+      cwd: fixturesDir,
+      symbol: 'add',
+    });
+
+    const expected = [
+      'Found symbols:',
+      `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
+      `${styleText('gray', 'math.ts:12:9:')} const ad${styleText('green', 'd =')} () => {};`,
+      '',
+      'References shown for symbol #1 at math.ts:12:9',
+      `${styleText('gray', 'math.ts:12:9:')}   const ${styleText('green', 'add')} = () => {};`,
+      `${styleText('gray', 'math.ts:14:10:')}   return ${styleText('green', 'add')};`,
+    ].join('\n');
+
+    assert.strictEqual(formatted.join('\n'), expected);
+  });
+
   it('should format references for PI constant', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
     const result = findReferences({
       symbol: 'PI',
       fileName: mathFile,
       cwd: fixturesDir,
+      n: 0,
     });
 
     const formatted = formatFindReferences({
       references: result.references,
       symbols: result.symbols,
-      index: result.index,
+      n: 0,
       cwd: fixturesDir,
       symbol: 'PI',
     });
@@ -75,12 +108,13 @@ describe('formatFindReferences function', () => {
       symbol: 'multiply',
       fileName: mathFile,
       cwd: fixturesDir,
+      n: 0,
     });
 
     const formatted = formatFindReferences({
       references: result.references,
       symbols: result.symbols,
-      index: result.index,
+      n: 0,
       cwd: fixturesDir,
       symbol: 'multiply',
     });

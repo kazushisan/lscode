@@ -23,6 +23,7 @@ type FindReferencesArgs =
       filePath: string;
       symbol: string;
       tsconfig?: string;
+      n?: number;
     };
 
 export class ArgsError extends Error {
@@ -96,6 +97,10 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
       tsconfig: {
         type: 'string',
       },
+      n: {
+        type: 'string',
+        short: 'n',
+      },
     },
     allowPositionals: true,
   });
@@ -133,9 +138,19 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
     );
   }
 
+  const n = values.n !== undefined ? parseInt(values.n, 10) : undefined;
+
+  if (n !== undefined && (isNaN(n) || n < 0)) {
+    throw new ArgsError(
+      'Invalid value for -n option. Expected a non-negative integer.',
+      'find-references',
+    );
+  }
+
   return {
     filePath,
     symbol,
     tsconfig: values.tsconfig,
+    n,
   };
 };

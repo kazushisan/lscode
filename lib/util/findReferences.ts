@@ -22,6 +22,7 @@ export const ERROR_TYPE = {
   TSCONFIG_NOT_FOUND: 'TSCONFIG_NOT_FOUND',
   FILE_NOT_IN_PROJECT: 'FILE_NOT_IN_PROJECT',
   SYMBOL_NOT_FOUND: 'SYMBOL_NOT_FOUND',
+  SYMBOL_INDEX_OUT_OF_RANGE: 'SYMBOL_INDEX_OUT_OF_RANGE',
 } as const;
 
 type FindReferencesErrorType = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
@@ -41,11 +42,13 @@ export const findReferences = ({
   fileName,
   cwd,
   tsconfig,
+  n,
 }: {
   symbol: string;
   fileName: string;
   cwd: string;
   tsconfig?: string;
+  n: number;
 }) => {
   const content = ts.sys.readFile(fileName);
   if (content === undefined) {
@@ -101,8 +104,14 @@ export const findReferences = ({
     );
   }
 
-  // Use the first symbol (if multiple found, use the first one)
-  const targetSymbol = symbols[0]!;
+  if (n < 0 || n >= symbols.length) {
+    throw new FindReferencesError(
+      `Symbol index ${n} out of range. Found ${symbols.length} symbol(s) with name '${symbol}'`,
+      ERROR_TYPE.SYMBOL_INDEX_OUT_OF_RANGE,
+    );
+  }
+
+  const targetSymbol = symbols[n]!;
   const declarations = targetSymbol.getDeclarations();
 
   if (!declarations || declarations.length === 0) {
@@ -166,6 +175,5 @@ export const findReferences = ({
   return {
     references,
     symbols: symbolsInfo,
-    index: 0,
   };
 };
