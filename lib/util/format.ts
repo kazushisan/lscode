@@ -18,13 +18,13 @@ interface SymbolInfo {
 export const formatFindReferences = ({
   references,
   symbols,
-  index,
+  n,
   cwd,
   symbol,
 }: {
   references: Reference[];
   symbols: SymbolInfo[];
-  index: number;
+  n: number;
   cwd: string;
   symbol: string;
 }): string[] => {
@@ -57,11 +57,11 @@ export const formatFindReferences = ({
   }
 
   if (symbols.length > 0) {
-    const symbolInfo = symbols[index];
+    const symbolInfo = symbols[n];
     if (symbolInfo) {
       const relativePath = relative(cwd, symbolInfo.fileName);
       output.push(
-        `References shown for symbol #${index} at ${relativePath}:${symbolInfo.line + 1}:${symbolInfo.character + 1}`,
+        `References shown for symbol #${n} at ${relativePath}:${symbolInfo.line + 1}:${symbolInfo.character + 1}`,
       );
     }
   }

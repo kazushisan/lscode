@@ -16,6 +16,7 @@ describe('findReferences function', () => {
       symbol: 'add',
       fileName: mathFile,
       cwd: fixturesDir,
+      n: 0,
     });
 
     assert.strictEqual(references.length, 5);
@@ -32,6 +33,7 @@ describe('findReferences function', () => {
       symbol: 'multiply',
       fileName: mathFile,
       cwd: fixturesDir,
+      n: 0,
     });
 
     assert.strictEqual(references.length, 4);
@@ -48,6 +50,7 @@ describe('findReferences function', () => {
       symbol: 'PI',
       fileName: mathFile,
       cwd: fixturesDir,
+      n: 0,
     });
 
     assert.strictEqual(references.length, 4);
@@ -64,6 +67,7 @@ describe('findReferences function', () => {
       symbol: 'add',
       fileName: mainFile,
       cwd: fixturesDir,
+      n: 0,
     });
 
     assert.strictEqual(references.length, 5);
@@ -80,6 +84,7 @@ describe('findReferences function', () => {
       symbol: 'add',
       fileName: mathFile,
       cwd: fixturesDir,
+      n: 0,
     });
 
     references.forEach((ref) => {
@@ -98,6 +103,7 @@ describe('findReferences function', () => {
       symbol: 'add',
       fileName: mainFile,
       cwd: fixturesDir,
+      n: 0,
     });
 
     assert.strictEqual(references.length, 5);
@@ -109,6 +115,7 @@ describe('findReferences function', () => {
       symbol: 'add',
       fileName: mainFile,
       cwd: fixturesDir,
+      n: 0,
     });
 
     const mainFileRefs = references.filter((ref) =>
@@ -126,6 +133,7 @@ describe('findReferences function', () => {
           symbol: 'nonExistentSymbol',
           fileName: mathFile,
           cwd: fixturesDir,
+          n: 0,
         });
       },
       (error: Error) => {
@@ -157,6 +165,7 @@ describe('findReferences function', () => {
         fileName: utilsFile,
         cwd: customConfigDir,
         tsconfig: 'tsconfig.custom.json',
+        n: 0,
       });
 
       assert.ok(references.length > 0);
@@ -176,6 +185,7 @@ describe('findReferences function', () => {
             fileName: mathFile,
             cwd: fixturesDir,
             tsconfig: 'nonexistent.json',
+            n: 0,
           });
         },
         (error: Error) => {
@@ -200,6 +210,7 @@ describe('findReferences function', () => {
             fileName: excludedFile,
             cwd: excludedFileDir,
             tsconfig: 'tsconfig.json',
+            n: 0,
           });
         },
         (error: Error) => {
@@ -221,6 +232,7 @@ describe('findReferences function', () => {
         fileName: includedFile,
         cwd: excludedFileDir,
         tsconfig: 'tsconfig.json',
+        n: 0,
       });
 
       assert.ok(references.length > 0);
@@ -236,6 +248,7 @@ describe('findReferences function', () => {
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
+        n: 0,
       });
 
       assert.ok(references.length > 0);
@@ -252,6 +265,7 @@ describe('findReferences function', () => {
         fileName: utilsFile,
         cwd: customConfigDir,
         tsconfig: absoluteTsConfigPath,
+        n: 0,
       });
 
       assert.ok(references.length > 0);
@@ -265,11 +279,12 @@ describe('findReferences function', () => {
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
+        n: 0,
       });
 
       assert.ok(result.symbols);
       assert.ok(Array.isArray(result.symbols));
-      assert.strictEqual(result.symbols.length, 1);
+      assert.strictEqual(result.symbols.length, 2);
 
       const symbolInfo = result.symbols[0]!;
       assert.ok(typeof symbolInfo.character === 'number');
@@ -285,6 +300,7 @@ describe('findReferences function', () => {
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
+        n: 0,
       });
 
       const symbolInfo = result.symbols[0]!;
@@ -298,6 +314,7 @@ describe('findReferences function', () => {
         symbol: 'PI',
         fileName: mathFile,
         cwd: fixturesDir,
+        n: 0,
       });
 
       assert.strictEqual(result.symbols.length, 1);
@@ -312,6 +329,7 @@ describe('findReferences function', () => {
         symbol: 'multiply',
         fileName: mathFile,
         cwd: fixturesDir,
+        n: 0,
       });
 
       assert.strictEqual(result.symbols.length, 1);
@@ -320,42 +338,66 @@ describe('findReferences function', () => {
     });
   });
 
-  describe('index field', () => {
-    it('should return index field set to 0', () => {
+  describe('n parameter', () => {
+    it('should use the nth symbol when n is specified', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
+
       const result = findReferences({
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
+        n: 1,
       });
 
-      assert.ok('index' in result);
-      assert.strictEqual(result.index, 0);
+      assert.ok(result.references.length === 2);
     });
 
-    it('should always have index 0 for different symbols', () => {
+    it('should throw SYMBOL_INDEX_OUT_OF_RANGE error when n is out of range', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
 
-      const addResult = findReferences({
-        symbol: 'add',
-        fileName: mathFile,
-        cwd: fixturesDir,
-      });
-      assert.strictEqual(addResult.index, 0);
+      assert.throws(
+        () => {
+          findReferences({
+            symbol: 'add',
+            fileName: mathFile,
+            cwd: fixturesDir,
+            n: 10, // Out of range
+          });
+        },
+        (error: Error) => {
+          assert.ok(error instanceof FindReferencesError);
+          assert.strictEqual(
+            (error as FindReferencesError).type,
+            ERROR_TYPE.SYMBOL_INDEX_OUT_OF_RANGE,
+          );
+          assert.ok(error.message.includes('10'));
+          assert.ok(error.message.includes('out of range'));
+          return true;
+        },
+      );
+    });
 
-      const multiplyResult = findReferences({
-        symbol: 'multiply',
-        fileName: mathFile,
-        cwd: fixturesDir,
-      });
-      assert.strictEqual(multiplyResult.index, 0);
+    it('should throw SYMBOL_INDEX_OUT_OF_RANGE error when n is negative', () => {
+      const mathFile = path.join(fixturesDir, 'math.ts');
 
-      const piResult = findReferences({
-        symbol: 'PI',
-        fileName: mathFile,
-        cwd: fixturesDir,
-      });
-      assert.strictEqual(piResult.index, 0);
+      assert.throws(
+        () => {
+          findReferences({
+            symbol: 'add',
+            fileName: mathFile,
+            cwd: fixturesDir,
+            n: -1,
+          });
+        },
+        (error: Error) => {
+          assert.ok(error instanceof FindReferencesError);
+          assert.strictEqual(
+            (error as FindReferencesError).type,
+            ERROR_TYPE.SYMBOL_INDEX_OUT_OF_RANGE,
+          );
+          return true;
+        },
+      );
     });
   });
 
@@ -370,6 +412,7 @@ describe('findReferences function', () => {
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
+        n: 0,
       });
 
       assert.ok(references.length > 0);
@@ -396,6 +439,7 @@ describe('findReferences function', () => {
             symbol: 'add',
             fileName: mathFile,
             cwd: noTsConfigDir,
+            n: 0,
           });
         },
         (error: Error) => {
