@@ -1,7 +1,7 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import { defineConfig } from 'eslint/config';
-import prettier from 'eslint-plugin-prettier/recommended';
+import prettier from 'eslint-config-prettier';
 
 export default defineConfig([
   { ignores: ['dist', 'test/fixtures'] },
