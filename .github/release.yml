@@ -14,7 +14,7 @@ changelog:
         - documentation
     - title: Other Changes
       labels:
-        - "*"
+        - '*'
       exclude:
         labels:
           - feature
