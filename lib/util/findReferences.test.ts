@@ -5,6 +5,7 @@ import {
   FindReferencesError,
   ERROR_TYPE,
 } from './findReferences.js';
+import { TsconfigError, TSCONFIG_ERROR_TYPE } from './tsconfig.js';
 import path from 'node:path';
 
 const fixturesDir = path.join(process.cwd(), 'test/fixtures/basic');
@@ -189,10 +190,10 @@ describe('findReferences function', () => {
           });
         },
         (error: Error) => {
-          assert.ok(error instanceof FindReferencesError);
+          assert.ok(error instanceof TsconfigError);
           assert.strictEqual(
-            (error as FindReferencesError).type,
-            ERROR_TYPE.TSCONFIG_NOT_FOUND,
+            (error as TsconfigError).type,
+            TSCONFIG_ERROR_TYPE.TSCONFIG_NOT_FOUND,
           );
           assert.ok(error.message.includes('nonexistent.json'));
           return true;

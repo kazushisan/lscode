@@ -1,8 +1,8 @@
 import ts from 'typescript';
-import { dirname, resolve } from 'node:path';
 import { createLanguageServiceHost } from './languageServiceHost.js';
 import { findSymbol } from './symbol.js';
 import { getLineAtPosition } from './position.js';
+import { getTsconfig } from './tsconfig.js';
 
 interface ReferenceLocation {
   fileName: string;
@@ -19,7 +19,6 @@ interface SymbolInfo {
 
 // tsr-skip used in test
 export const ERROR_TYPE = {
-  TSCONFIG_NOT_FOUND: 'TSCONFIG_NOT_FOUND',
   FILE_NOT_IN_PROJECT: 'FILE_NOT_IN_PROJECT',
   SYMBOL_NOT_FOUND: 'SYMBOL_NOT_FOUND',
   SYMBOL_INDEX_OUT_OF_RANGE: 'SYMBOL_INDEX_OUT_OF_RANGE',
@@ -55,27 +54,9 @@ export const findReferences = ({
     throw new Error(`Failed to read file: ${fileName}`);
   }
 
-  const configPath = tsconfig
-    ? (() => {
-        const absoluteConfigPath = resolve(cwd, tsconfig);
+  const { options, fileNames, configFound } = getTsconfig(cwd, tsconfig);
 
-        if (!ts.sys.fileExists(absoluteConfigPath)) {
-          throw new FindReferencesError(
-            `TypeScript config file not found: ${tsconfig}`,
-            ERROR_TYPE.TSCONFIG_NOT_FOUND,
-          );
-        }
-        return absoluteConfigPath;
-      })()
-    : ts.findConfigFile(cwd, ts.sys.fileExists, 'tsconfig.json');
-
-  const { options, fileNames } = ts.parseJsonConfigFileContent(
-    configPath ? ts.readConfigFile(configPath, ts.sys.readFile).config : {},
-    ts.sys,
-    configPath ? dirname(configPath) : cwd,
-  );
-
-  if (configPath && !fileNames.includes(fileName)) {
+  if (configFound && !fileNames.includes(fileName)) {
     throw new FindReferencesError(
       `${fileName} is not part of the TypeScript project. Hint: use --tsconfig to specify the correct tsconfig file.`,
       ERROR_TYPE.FILE_NOT_IN_PROJECT,
