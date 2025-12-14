@@ -8,7 +8,7 @@ interface DefinitionLocation {
   fileName: string;
   line: number; // 0-based
   character: number; // 0-based
-  code: string; // entire line of the definition
+  code: string; // entire code of the definition
 }
 
 interface SymbolInfo {
@@ -35,6 +35,50 @@ export class GetDefinitionError extends Error {
     this.type = type;
   }
 }
+
+const findNodeAtPosition = (
+  node: ts.Node,
+  targetPosition: number,
+): ts.Node | undefined => {
+  if (targetPosition < node.getStart() || targetPosition >= node.getEnd()) {
+    return undefined;
+  }
+
+  // Try to find a more specific child node
+  let result: ts.Node | undefined;
+  ts.forEachChild(node, (child) => {
+    if (!result) {
+      const found = findNodeAtPosition(child, targetPosition);
+      if (found) {
+        result = found;
+      }
+    }
+  });
+
+  return result || node;
+};
+
+const findDeclarationNode = (
+  node: ts.Node | undefined,
+): ts.Node | undefined => {
+  let current = node;
+  while (current) {
+    if (
+      ts.isVariableStatement(current) ||
+      ts.isFunctionDeclaration(current) ||
+      ts.isClassDeclaration(current) ||
+      ts.isInterfaceDeclaration(current) ||
+      ts.isTypeAliasDeclaration(current) ||
+      ts.isEnumDeclaration(current) ||
+      ts.isMethodDeclaration(current) ||
+      ts.isPropertyDeclaration(current)
+    ) {
+      return current;
+    }
+    current = current.parent;
+  }
+  return undefined;
+};
 
 export const getDefinition = ({
   symbol,
@@ -110,7 +154,18 @@ export const getDefinition = ({
       }
 
       const res = sourceFile.getLineAndCharacterOfPosition(item.textSpan.start);
-      const code = getLineAtPosition(sourceFile.text, item.textSpan.start);
+
+      const nodeAtPosition = findNodeAtPosition(
+        sourceFile,
+        item.textSpan.start,
+      );
+      const declarationNode = findDeclarationNode(nodeAtPosition);
+      const code = declarationNode
+        ? declarationNode.getText()
+        : sourceFile.text.substring(
+            item.textSpan.start,
+            item.textSpan.start + item.textSpan.length,
+          );
 
       definitions.push({
         fileName: item.fileName,

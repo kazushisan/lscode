@@ -1,6 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { getDefinition, GetDefinitionError, ERROR_TYPE } from './getDefinition.js';
+import {
+  getDefinition,
+  GetDefinitionError,
+  ERROR_TYPE,
+} from './getDefinition.js';
 import { TsconfigError, TSCONFIG_ERROR_TYPE } from './tsconfig.js';
 import path from 'node:path';
 
@@ -60,7 +64,7 @@ describe('getDefinition function', () => {
     assert.strictEqual(def.fileName, mathFile);
     assert.strictEqual(
       def.code,
-      'export const add = (a: number, b: number): number => {',
+      'export const add = (a: number, b: number): number => {\n  return a + b;\n};',
     );
   });
 
