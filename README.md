@@ -2,6 +2,12 @@
 
 > TypeScript's LanguageService for AI Coding Agents
 
+## Why lscode?
+
+- 🎯 **Deterministic and Precise**: lscode operates on TypeScript’s semantic model rather than raw text, enabling accurate analysis and edits with predictable results—making it a reliable foundation for AI coding agents.
+- 🤖 **Designed for AI-Driven Workflows**: lscode provides an agent-friendly CLI with symbol-based addressing (`path/to/file.ts#symbol`), so AIs don't have to manage line numbers or character offsets.
+- 🏗️ **Built for TypeScript**: lscode is built on lower-level TypeScript LanguageService APIs. Definition lookups return complete, semantically scoped code blocks—not just cursor positions—reducing unnecessary AI calls while enabling richer, context-aware operations.
+
 ## Install
 
 ```bash
