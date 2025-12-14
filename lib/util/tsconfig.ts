@@ -18,35 +18,52 @@ export class TsconfigError extends Error {
   }
 }
 
-export const getTsconfig = ({
+const getTsConfigPath = ({
   cwd,
   tsconfig,
-  fileExists = ts.sys.fileExists,
-  readFile = ts.sys.readFile,
+  fileExists,
 }: {
   cwd: string;
   tsconfig?: string;
-  fileExists?: (path: string) => boolean;
-  readFile?: (path: string) => string | undefined;
-}) => {
-  const configPath = tsconfig
-    ? (() => {
-        const absoluteConfigPath = resolve(cwd, tsconfig);
+  fileExists: (path: string) => boolean;
+}): string | undefined => {
+  if (tsconfig) {
+    const absoluteConfigPath = resolve(cwd, tsconfig);
 
-        if (!ts.sys.fileExists(absoluteConfigPath)) {
-          throw new TsconfigError(
-            `TypeScript config file not found: ${tsconfig}`,
-            TSCONFIG_ERROR_TYPE.TSCONFIG_NOT_FOUND,
-          );
-        }
-        return absoluteConfigPath;
-      })()
-    : fileExists(resolve(cwd, 'tsconfig.json'))
-      ? resolve(cwd, 'tsconfig.json')
-      : undefined;
+    if (!fileExists(absoluteConfigPath)) {
+      throw new TsconfigError(
+        `TypeScript config file not found: ${tsconfig}`,
+        TSCONFIG_ERROR_TYPE.TSCONFIG_NOT_FOUND,
+      );
+    }
+
+    return absoluteConfigPath;
+  }
+
+  const defaultConfigPath = resolve(cwd, 'tsconfig.json');
+
+  if (fileExists(defaultConfigPath)) {
+    return defaultConfigPath;
+  }
+
+  return undefined;
+};
+
+export const getTsconfig = ({
+  cwd,
+  tsconfig,
+}: {
+  cwd: string;
+  tsconfig?: string;
+}) => {
+  const configPath = getTsConfigPath({
+    cwd,
+    tsconfig,
+    fileExists: ts.sys.fileExists,
+  });
 
   const { options, fileNames } = ts.parseJsonConfigFileContent(
-    configPath ? ts.readConfigFile(configPath, readFile).config : {},
+    configPath ? ts.readConfigFile(configPath, ts.sys.readFile).config : {},
     ts.sys,
     configPath ? dirname(configPath) : cwd,
   );
