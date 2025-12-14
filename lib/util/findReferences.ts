@@ -53,7 +53,7 @@ export const findReferences = ({
     throw new Error(`Failed to read file: ${fileName}`);
   }
 
-  const { options, fileNames } = getTsconfig({
+  const { options, fileNames, resolvedConfigPath } = getTsconfig({
     cwd,
     tsconfig,
     fileName,
@@ -148,5 +148,6 @@ export const findReferences = ({
   return {
     references,
     symbols: symbolsInfo,
+    resolvedConfigPath,
   };
 };

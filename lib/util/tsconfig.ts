@@ -216,5 +216,5 @@ export const getTsconfig = ({
     );
   }
 
-  return { options, fileNames };
+  return { options, fileNames, resolvedConfigPath: configPath };
 };

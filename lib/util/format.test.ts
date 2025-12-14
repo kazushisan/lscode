@@ -1,11 +1,56 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { formatFindReferences } from './format.js';
+import { formatFindReferences, formatGetTsconfig } from './format.js';
 import { findReferences } from './findReferences.js';
 import { styleText } from 'node:util';
 import path from 'node:path';
 
 const fixturesDir = path.join(process.cwd(), 'test/fixtures/basic');
+
+describe('formatGetTsconfig function', () => {
+  it('should format tsconfig path with [info] styling', () => {
+    const result = formatGetTsconfig({
+      resolvedConfigPath: path.join(fixturesDir, 'tsconfig.json'),
+      cwd: fixturesDir,
+      fileName: path.join(fixturesDir, 'main.ts'),
+    });
+
+    assert.strictEqual(result.length, 1);
+    assert.strictEqual(
+      result[0],
+      `[${styleText('blue', 'info')}] using tsconfig tsconfig.json`,
+    );
+  });
+
+  it('should return relative path from cwd', () => {
+    const result = formatGetTsconfig({
+      resolvedConfigPath: path.join(fixturesDir, 'tsconfig.json'),
+      cwd: process.cwd(),
+      fileName: path.join(fixturesDir, 'main.ts'),
+    });
+
+    assert.strictEqual(result.length, 1);
+    assert.strictEqual(
+      result[0],
+      `[${styleText('blue', 'info')}] using tsconfig test/fixtures/basic/tsconfig.json`,
+    );
+  });
+
+  it('should return warning when resolvedConfigPath is undefined', () => {
+    const fileName = path.join(fixturesDir, 'main.ts');
+    const result = formatGetTsconfig({
+      resolvedConfigPath: undefined,
+      cwd: fixturesDir,
+      fileName,
+    });
+
+    assert.strictEqual(result.length, 1);
+    assert.strictEqual(
+      result[0],
+      `[${styleText('yellow', 'warning')}] Could not find a TypeScript project for main.ts (no matching tsconfig found). Using default compiler options with cwd.`,
+    );
+  });
+});
 
 describe('formatFindReferences function', () => {
   it('should format references for add function', () => {
