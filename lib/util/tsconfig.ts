@@ -31,7 +31,9 @@ export const getTsconfig = (cwd: string, tsconfig?: string) => {
         }
         return absoluteConfigPath;
       })()
-    : ts.findConfigFile(cwd, ts.sys.fileExists, 'tsconfig.json');
+    : ts.sys.fileExists(resolve(cwd, 'tsconfig.json'))
+      ? resolve(cwd, 'tsconfig.json')
+      : undefined;
 
   const { options, fileNames } = ts.parseJsonConfigFileContent(
     configPath ? ts.readConfigFile(configPath, ts.sys.readFile).config : {},
