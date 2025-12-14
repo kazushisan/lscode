@@ -54,7 +54,11 @@ export const findReferences = ({
     throw new Error(`Failed to read file: ${fileName}`);
   }
 
-  const { options, fileNames, configFound } = getTsconfig({ cwd, tsconfig });
+  const { options, fileNames, configFound } = getTsconfig({
+    cwd,
+    tsconfig,
+    fileName,
+  });
 
   if (configFound && !fileNames.includes(fileName)) {
     throw new FindReferencesError(
