@@ -5,6 +5,8 @@
 
 > TypeScript's LanguageService for AI Coding Agents
 
+lscode brings the power of TypeScript language tools to AI-driven development workflows. lscode is a command-line tool tailored for AI coding agents that leverages TypeScript semantics to provide precise code analysis and manipulation features.
+
 ## Why `lscode`?
 
 ### 🎯 Deterministic and Precise
