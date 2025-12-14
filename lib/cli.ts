@@ -11,6 +11,7 @@ import {
 } from './util/args.js';
 import { MAIN_HELP, FIND_REFERENCES_HELP } from './util/help.js';
 import { formatFindReferences } from './util/format.js';
+import { TsconfigError } from './util/tsconfig.js';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -97,7 +98,7 @@ try {
     process.exit(1);
   }
 
-  if (error instanceof FindReferencesError) {
+  if (error instanceof FindReferencesError || error instanceof TsconfigError) {
     console.error(`Error: ${error.message}`);
     process.exit(1);
   }
