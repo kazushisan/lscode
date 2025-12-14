@@ -1,6 +1,6 @@
 import { parseArgs } from 'node:util';
 
-const KNOWN_COMMANDS = ['find-references'] as const;
+const KNOWN_COMMANDS = ['find-references', 'get-definition'] as const;
 
 type Command = (typeof KNOWN_COMMANDS)[number];
 
@@ -16,6 +16,17 @@ type MainArgs =
     };
 
 type FindReferencesArgs =
+  | {
+      help: true;
+    }
+  | {
+      filePath: string;
+      symbol: string;
+      tsconfig?: string;
+      n?: number;
+    };
+
+type GetDefinitionArgs =
   | {
       help: true;
     }
@@ -144,6 +155,75 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
     throw new ArgsError(
       'Invalid value for -n option. Expected a non-negative integer.',
       'find-references',
+    );
+  }
+
+  return {
+    filePath,
+    symbol,
+    tsconfig: values.tsconfig,
+    n,
+  };
+};
+
+export const parseGetDefinitionArgs = (argv: string[]): GetDefinitionArgs => {
+  const { values, positionals } = parseArgs({
+    args: argv,
+    options: {
+      help: {
+        type: 'boolean',
+        short: 'h',
+      },
+      tsconfig: {
+        type: 'string',
+      },
+      n: {
+        type: 'string',
+        short: 'n',
+      },
+    },
+    allowPositionals: true,
+  });
+
+  if (values.help) {
+    return {
+      help: true,
+    };
+  }
+
+  if (positionals.length === 0) {
+    throw new ArgsError(
+      'Missing required argument <file#symbol>',
+      'get-definition',
+    );
+  }
+
+  const arg = positionals[0]!;
+  const hashIndex = arg.lastIndexOf('#');
+
+  if (hashIndex === -1) {
+    throw new ArgsError(
+      'Invalid argument format. Expected: path/to/file.ts#symbol',
+      'get-definition',
+    );
+  }
+
+  const filePath = arg.substring(0, hashIndex);
+  const symbol = arg.substring(hashIndex + 1);
+
+  if (!filePath || !symbol) {
+    throw new ArgsError(
+      'Invalid argument format. Expected: path/to/file.ts#symbol',
+      'get-definition',
+    );
+  }
+
+  const n = values.n !== undefined ? parseInt(values.n, 10) : undefined;
+
+  if (n !== undefined && (isNaN(n) || n < 0)) {
+    throw new ArgsError(
+      'Invalid value for -n option. Expected a non-negative integer.',
+      'get-definition',
     );
   }
 

@@ -4,13 +4,23 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { findReferences, FindReferencesError } from './util/findReferences.js';
+import { getDefinition, GetDefinitionError } from './util/getDefinition.js';
 import {
   parseMainArgs,
   parseFindReferencesArgs,
+  parseGetDefinitionArgs,
   ArgsError,
 } from './util/args.js';
-import { MAIN_HELP, FIND_REFERENCES_HELP } from './util/help.js';
-import { formatFindReferences, formatGetTsconfig } from './util/format.js';
+import {
+  MAIN_HELP,
+  FIND_REFERENCES_HELP,
+  GET_DEFINITION_HELP,
+} from './util/help.js';
+import {
+  formatFindReferences,
+  formatGetDefinition,
+  formatGetTsconfig,
+} from './util/format.js';
 import { TsconfigError } from './util/tsconfig.js';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -84,6 +94,45 @@ const main = () => {
       lines.forEach((line) => console.log(line));
       break;
     }
+    case 'get-definition': {
+      const args = parseGetDefinitionArgs(commandArgs);
+
+      if ('help' in args) {
+        console.log(GET_DEFINITION_HELP);
+        return;
+      }
+
+      const { filePath, symbol, tsconfig, n } = args;
+
+      const cwd = process.cwd();
+      const fileName = resolve(cwd, filePath);
+
+      const symbolIndex = n !== undefined ? n : 0;
+
+      const result = getDefinition({
+        symbol,
+        fileName,
+        cwd,
+        tsconfig,
+        n: symbolIndex,
+      });
+
+      formatGetTsconfig({
+        resolvedConfigPath: result.resolvedConfigPath,
+        cwd,
+        fileName,
+      }).forEach((line) => console.log(line));
+
+      const lines = formatGetDefinition({
+        definitions: result.definitions,
+        symbols: result.symbols,
+        n: symbolIndex,
+        cwd,
+        symbol,
+      });
+      lines.forEach((line) => console.log(line));
+      break;
+    }
     default: {
       console.error(`Error: Unknown command '${command}'`);
       console.log(MAIN_HELP);
@@ -101,11 +150,18 @@ try {
       case 'find-references':
         console.log(FIND_REFERENCES_HELP);
         break;
+      case 'get-definition':
+        console.log(GET_DEFINITION_HELP);
+        break;
     }
     process.exit(1);
   }
 
-  if (error instanceof FindReferencesError || error instanceof TsconfigError) {
+  if (
+    error instanceof FindReferencesError ||
+    error instanceof GetDefinitionError ||
+    error instanceof TsconfigError
+  ) {
     console.error(`Error: ${error.message}`);
     process.exit(1);
   }

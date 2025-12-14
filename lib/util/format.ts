@@ -126,3 +126,78 @@ export const formatFindReferences = ({
 
   return output;
 };
+
+interface DefinitionLocation {
+  fileName: string;
+  line: number;
+  character: number;
+  code: string;
+}
+
+export const formatGetDefinition = ({
+  definitions,
+  symbols,
+  n,
+  cwd,
+  symbol,
+}: {
+  definitions: DefinitionLocation[];
+  symbols: SymbolInfo[];
+  n: number;
+  cwd: string;
+  symbol: string;
+}): string[] => {
+  const output: string[] = [];
+
+  if (symbols.length > 0) {
+    output.push('Found symbols:');
+    symbols.forEach((symbolInfo) => {
+      const relativePath = relative(cwd, symbolInfo.fileName);
+      const location = styleText(
+        'gray',
+        `${relativePath}:${symbolInfo.line + 1}:${symbolInfo.character + 1}:`,
+      );
+
+      const code = symbolInfo.code;
+      const trimmedCode = code.trim();
+      const leadingWhitespace = code.length - code.trimStart().length;
+      const start = symbolInfo.character - leadingWhitespace;
+      const end = start + symbol.length;
+
+      const beforeSymbol = trimmedCode.substring(0, start);
+      const symbolText = trimmedCode.substring(start, end);
+      const afterSymbol = trimmedCode.substring(end);
+
+      const highlightedSymbol = styleText('green', symbolText);
+
+      output.push(
+        `${location} ${beforeSymbol}${highlightedSymbol}${afterSymbol}`,
+      );
+    });
+    output.push('');
+  }
+
+  if (symbols.length > 0) {
+    const symbolInfo = symbols[n];
+    if (symbolInfo) {
+      const relativePath = relative(cwd, symbolInfo.fileName);
+      output.push(
+        `Definition shown for symbol #${n} at ${relativePath}:${symbolInfo.line + 1}:${symbolInfo.character + 1}`,
+      );
+    }
+  }
+
+  definitions.forEach((def) => {
+    const relativePath = relative(cwd, def.fileName);
+
+    const location = styleText(
+      'gray',
+      `${relativePath}:${def.line + 1}:${def.character + 1}:`,
+    );
+
+    output.push(location);
+    output.push(def.code);
+  });
+
+  return output;
+};
