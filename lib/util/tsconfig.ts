@@ -21,9 +21,13 @@ export class TsconfigError extends Error {
 export const getTsconfig = ({
   cwd,
   tsconfig,
+  fileExists = ts.sys.fileExists,
+  readFile = ts.sys.readFile,
 }: {
   cwd: string;
   tsconfig?: string;
+  fileExists?: (path: string) => boolean;
+  readFile?: (path: string) => string | undefined;
 }) => {
   const configPath = tsconfig
     ? (() => {
@@ -37,12 +41,12 @@ export const getTsconfig = ({
         }
         return absoluteConfigPath;
       })()
-    : ts.sys.fileExists(resolve(cwd, 'tsconfig.json'))
+    : fileExists(resolve(cwd, 'tsconfig.json'))
       ? resolve(cwd, 'tsconfig.json')
       : undefined;
 
   const { options, fileNames } = ts.parseJsonConfigFileContent(
-    configPath ? ts.readConfigFile(configPath, ts.sys.readFile).config : {},
+    configPath ? ts.readConfigFile(configPath, readFile).config : {},
     ts.sys,
     configPath ? dirname(configPath) : cwd,
   );
