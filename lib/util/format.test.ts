@@ -28,7 +28,7 @@ describe('formatFindReferences function', () => {
     const expected = [
       'Found symbols:',
       `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
-      `${styleText('gray', 'math.ts:12:9:')} const ad${styleText('green', 'd =')} () => {};`,
+      `${styleText('gray', 'math.ts:12:9:')} const ${styleText('green', 'add')} = () => {};`,
       '',
       'References shown for symbol #0 at math.ts:1:14',
       `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
@@ -61,7 +61,7 @@ describe('formatFindReferences function', () => {
     const expected = [
       'Found symbols:',
       `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
-      `${styleText('gray', 'math.ts:12:9:')} const ad${styleText('green', 'd =')} () => {};`,
+      `${styleText('gray', 'math.ts:12:9:')} const ${styleText('green', 'add')} = () => {};`,
       '',
       'References shown for symbol #1 at math.ts:12:9',
       `${styleText('gray', 'math.ts:12:9:')}   const ${styleText('green', 'add')} = () => {};`,
