@@ -17,6 +17,7 @@ Usage: lscode <command> [options]
 
 Commands:
   find-references <file#symbol>  Find all references to a symbol in a file
+  get-definition <file#symbol>   Get the definition of a symbol in a file
 
 Options:
   --help, -h                      Show help
