@@ -199,9 +199,19 @@ export const getTsconfig = ({
     configPath ? dirname(configPath) : cwd,
   );
 
-  if (configPath && !fileNames.includes(fileName)) {
+  if (!fileNames.includes(fileName)) {
+    if (configPath) {
+      throw new TsconfigError(
+        `${fileName} is not part of the TypeScript project ${resolve(cwd, configPath)}. Hint: use --tsconfig to specify the correct tsconfig file.`,
+        TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
+      );
+    }
+
+    // when does this happen?
     throw new TsconfigError(
-      `${fileName} is not part of the TypeScript project. Hint: use --tsconfig to specify the correct tsconfig file.`,
+      `Could not find a TypeScript project for ${fileName} (no matching 
+      tsconfig found). Attempted to use default compiler options with cwd,
+       but ${fileName} is not included.`,
       TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
     );
   }
