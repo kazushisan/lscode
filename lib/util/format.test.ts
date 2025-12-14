@@ -1,7 +1,12 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { formatFindReferences, formatGetTsconfig } from './format.js';
+import {
+  formatFindReferences,
+  formatGetDefinition,
+  formatGetTsconfig,
+} from './format.js';
 import { findReferences } from './findReferences.js';
+import { getDefinition } from './getDefinition.js';
 import { styleText } from 'node:util';
 import path from 'node:path';
 
@@ -169,5 +174,120 @@ describe('formatFindReferences function', () => {
     assert.ok(output.includes('References shown for symbol #0'));
     assert.ok(output.includes('math.ts'));
     assert.ok(output.includes('main.ts'));
+  });
+});
+
+describe('formatGetDefinition function', () => {
+  it('should format definition for add function', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const result = getDefinition({
+      symbol: 'add',
+      fileName: mathFile,
+      cwd: fixturesDir,
+      n: 0,
+    });
+
+    const formatted = formatGetDefinition({
+      definitions: result.definitions,
+      symbols: result.symbols,
+      n: 0,
+      cwd: fixturesDir,
+      symbol: 'add',
+    });
+
+    const expected = [
+      'Found symbols:',
+      `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
+      `${styleText('gray', 'math.ts:12:9:')} const ${styleText('green', 'add')} = () => {};`,
+      '',
+      'Definition shown for symbol #0 at math.ts:1:14',
+      styleText('gray', 'math.ts:1:14:'),
+      'export const add = (a: number, b: number): number => {\n  return a + b;\n};',
+    ].join('\n');
+
+    assert.strictEqual(formatted.join('\n'), expected);
+  });
+
+  it('should format definition for add function with n=1', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const result = getDefinition({
+      symbol: 'add',
+      fileName: mathFile,
+      cwd: fixturesDir,
+      n: 1,
+    });
+
+    const formatted = formatGetDefinition({
+      definitions: result.definitions,
+      symbols: result.symbols,
+      n: 1,
+      cwd: fixturesDir,
+      symbol: 'add',
+    });
+
+    const expected = [
+      'Found symbols:',
+      `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
+      `${styleText('gray', 'math.ts:12:9:')} const ${styleText('green', 'add')} = () => {};`,
+      '',
+      'Definition shown for symbol #1 at math.ts:12:9',
+      styleText('gray', 'math.ts:12:9:'),
+      'const add = () => {};',
+    ].join('\n');
+
+    assert.strictEqual(formatted.join('\n'), expected);
+  });
+
+  it('should format definition for PI constant', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const result = getDefinition({
+      symbol: 'PI',
+      fileName: mathFile,
+      cwd: fixturesDir,
+      n: 0,
+    });
+
+    const formatted = formatGetDefinition({
+      definitions: result.definitions,
+      symbols: result.symbols,
+      n: 0,
+      cwd: fixturesDir,
+      symbol: 'PI',
+    });
+
+    const expected = [
+      'Found symbols:',
+      `${styleText('gray', 'math.ts:9:14:')} export const ${styleText('green', 'PI')} = 3.14159;`,
+      '',
+      'Definition shown for symbol #0 at math.ts:9:14',
+      styleText('gray', 'math.ts:9:14:'),
+      'export const PI = 3.14159;',
+    ].join('\n');
+
+    assert.strictEqual(formatted.join('\n'), expected);
+  });
+
+  it('should format definition for multiply function', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const result = getDefinition({
+      symbol: 'multiply',
+      fileName: mathFile,
+      cwd: fixturesDir,
+      n: 0,
+    });
+
+    const formatted = formatGetDefinition({
+      definitions: result.definitions,
+      symbols: result.symbols,
+      n: 0,
+      cwd: fixturesDir,
+      symbol: 'multiply',
+    });
+
+    const output = formatted.join('\n');
+    assert.ok(output.includes('Found symbols:'));
+    assert.ok(output.includes('Definition shown for symbol #0'));
+    assert.ok(output.includes('math.ts'));
+    assert.ok(output.includes('multiply'));
   });
 });
