@@ -5,6 +5,7 @@ Usage: lscode <command> [options]
 
 Commands:
   find-references <file#symbol>  Find all references to a symbol in a file
+  get-definition <file#symbol>   Get the definition of a symbol in a file
 
 Options:
   --help, -h                      Show help
@@ -30,4 +31,23 @@ Examples:
   lscode find-references src/main.ts#myFunction
   lscode find-references src/main.ts#myFunction --tsconfig ./tsconfig.json
   lscode find-references src/main.ts#myFunction -n 1
+`.trim();
+
+export const GET_DEFINITION_HELP = `
+lscode get-definition - Get the definition of a symbol in a file
+
+Usage: lscode get-definition <file#symbol> [options]
+
+Arguments:
+  <file#symbol>                  File path and symbol in format: path/to/file.ts#symbol
+
+Options:
+  -n <number>                     Index of the symbol to use (default: 0)
+  --tsconfig <path>               Path to tsconfig.json file
+  --help, -h                      Show help
+
+Examples:
+  lscode get-definition src/main.ts#myFunction
+  lscode get-definition src/main.ts#myFunction --tsconfig ./tsconfig.json
+  lscode get-definition src/main.ts#myFunction -n 1
 `.trim();
