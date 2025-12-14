@@ -39,13 +39,15 @@ export const formatFindReferences = ({
         `${relativePath}:${symbolInfo.line + 1}:${symbolInfo.character + 1}:`,
       );
 
-      const code = symbolInfo.code.trim();
-      const start = symbolInfo.character;
+      const code = symbolInfo.code;
+      const trimmedCode = code.trim();
+      const leadingWhitespace = code.length - code.trimStart().length;
+      const start = symbolInfo.character - leadingWhitespace;
       const end = start + symbol.length;
 
-      const beforeSymbol = code.substring(0, start);
-      const symbolText = code.substring(start, end);
-      const afterSymbol = code.substring(end);
+      const beforeSymbol = trimmedCode.substring(0, start);
+      const symbolText = trimmedCode.substring(start, end);
+      const afterSymbol = trimmedCode.substring(end);
 
       const highlightedSymbol = styleText('green', symbolText);
 
