@@ -1,5 +1,8 @@
 # lscode
 
+<a href="https://badge.fury.io/js/lscode"><img alt="npm version" src="https://badge.fury.io/js/lscode.svg" /></a>
+<a href="https://github.com/kazushisan/lscode/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/kazushisan/lscode/actions/workflows/ci.yml/badge.svg?branch=main" /></a>
+
 > TypeScript's LanguageService for AI Coding Agents
 
 ## Why `lscode`?
