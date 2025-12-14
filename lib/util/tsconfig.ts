@@ -18,7 +18,13 @@ export class TsconfigError extends Error {
   }
 }
 
-export const getTsconfig = (cwd: string, tsconfig?: string) => {
+export const getTsconfig = ({
+  cwd,
+  tsconfig,
+}: {
+  cwd: string;
+  tsconfig?: string;
+}) => {
   const configPath = tsconfig
     ? (() => {
         const absoluteConfigPath = resolve(cwd, tsconfig);
