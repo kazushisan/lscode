@@ -34,7 +34,7 @@ Run 'lscode <command> --help' for more information on a command.
 
 ## Author
 
-Kazushi Konosu
+Kazushi Konosu (https://github.com/kazushisan)
 
 ## License
 
