@@ -5,6 +5,7 @@ import {
   FindReferencesError,
   ERROR_TYPE,
 } from './findReferences.js';
+import { TsconfigError, TSCONFIG_ERROR_TYPE } from './tsconfig.js';
 import path from 'node:path';
 
 const fixturesDir = path.join(process.cwd(), 'test/fixtures/basic');
@@ -189,10 +190,10 @@ describe('findReferences function', () => {
           });
         },
         (error: Error) => {
-          assert.ok(error instanceof FindReferencesError);
+          assert.ok(error instanceof TsconfigError);
           assert.strictEqual(
-            (error as FindReferencesError).type,
-            ERROR_TYPE.TSCONFIG_NOT_FOUND,
+            (error as TsconfigError).type,
+            TSCONFIG_ERROR_TYPE.TSCONFIG_NOT_FOUND,
           );
           assert.ok(error.message.includes('nonexistent.json'));
           return true;
@@ -214,10 +215,10 @@ describe('findReferences function', () => {
           });
         },
         (error: Error) => {
-          assert.ok(error instanceof FindReferencesError);
+          assert.ok(error instanceof TsconfigError);
           assert.strictEqual(
-            (error as FindReferencesError).type,
-            ERROR_TYPE.FILE_NOT_IN_PROJECT,
+            (error as TsconfigError).type,
+            TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
           );
           assert.ok(error.message.includes('excluded.ts'));
           return true;
@@ -402,8 +403,6 @@ describe('findReferences function', () => {
   });
 
   describe('with auto-discovered tsconfig', () => {
-    const noTsConfigDir = path.join(process.cwd(), 'test/fixtures/no-tsconfig');
-
     it('should work when auto-discovered config includes the file', () => {
       // This test verifies that when a tsconfig is auto-discovered
       // and the file IS included in the project, it should work correctly
@@ -429,26 +428,24 @@ describe('findReferences function', () => {
     });
 
     it('should throw FILE_NOT_IN_PROJECT when auto-discovered config excludes file', () => {
-      const mathFile = path.join(noTsConfigDir, 'math.ts');
+      const excludeFile = path.join(fixturesDir, 'exclude.ts');
 
-      // When no tsconfig is in the directory, ts.findConfigFile searches upward
-      // and finds the project root tsconfig.json, which doesn't include this file
       assert.throws(
         () => {
           findReferences({
-            symbol: 'add',
-            fileName: mathFile,
-            cwd: noTsConfigDir,
+            symbol: 'divide',
+            fileName: excludeFile,
+            cwd: fixturesDir,
             n: 0,
           });
         },
         (error: Error) => {
-          assert.ok(error instanceof FindReferencesError);
+          assert.ok(error instanceof TsconfigError);
           assert.strictEqual(
-            (error as FindReferencesError).type,
-            ERROR_TYPE.FILE_NOT_IN_PROJECT,
+            (error as TsconfigError).type,
+            TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
           );
-          assert.ok(error.message.includes('math.ts'));
+          assert.ok(error.message.includes('exclude.ts'));
           return true;
         },
       );

@@ -15,6 +15,26 @@ interface SymbolInfo {
   code: string;
 }
 
+export const formatGetTsconfig = ({
+  resolvedConfigPath,
+  cwd,
+  fileName,
+}: {
+  resolvedConfigPath?: string;
+  cwd: string;
+  fileName: string;
+}): string[] => {
+  if (!resolvedConfigPath) {
+    const relativeFileName = relative(cwd, fileName);
+    return [
+      `[${styleText('yellow', 'warning')}] Could not find a TypeScript project for ${relativeFileName} (no matching tsconfig found). Using default compiler options with cwd.`,
+    ];
+  }
+
+  const relativePath = relative(cwd, resolvedConfigPath);
+  return [`[${styleText('blue', 'info')}] using tsconfig ${relativePath}`];
+};
+
 export const formatFindReferences = ({
   references,
   symbols,

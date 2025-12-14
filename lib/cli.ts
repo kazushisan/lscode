@@ -10,7 +10,8 @@ import {
   ArgsError,
 } from './util/args.js';
 import { MAIN_HELP, FIND_REFERENCES_HELP } from './util/help.js';
-import { formatFindReferences } from './util/format.js';
+import { formatFindReferences, formatGetTsconfig } from './util/format.js';
+import { TsconfigError } from './util/tsconfig.js';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -55,16 +56,23 @@ const main = () => {
       const { filePath, symbol, tsconfig, n } = args;
 
       const cwd = process.cwd();
+      const fileName = resolve(cwd, filePath);
 
       const symbolIndex = n !== undefined ? n : 0;
 
       const result = findReferences({
         symbol,
-        fileName: resolve(cwd, filePath),
+        fileName,
         cwd,
         tsconfig,
         n: symbolIndex,
       });
+
+      formatGetTsconfig({
+        resolvedConfigPath: result.resolvedConfigPath,
+        cwd,
+        fileName,
+      }).forEach((line) => console.log(line));
 
       const lines = formatFindReferences({
         references: result.references,
@@ -97,7 +105,7 @@ try {
     process.exit(1);
   }
 
-  if (error instanceof FindReferencesError) {
+  if (error instanceof FindReferencesError || error instanceof TsconfigError) {
     console.error(`Error: ${error.message}`);
     process.exit(1);
   }
