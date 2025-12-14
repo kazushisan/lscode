@@ -1,6 +1,7 @@
 import ts from 'typescript';
 import { dirname, resolve } from 'node:path';
 
+// tsr-skip used in test
 export const TSCONFIG_ERROR_TYPE = {
   TSCONFIG_NOT_FOUND: 'TSCONFIG_NOT_FOUND',
   FILE_NOT_IN_PROJECT: 'FILE_NOT_IN_PROJECT',
@@ -130,6 +131,7 @@ const findTsConfigForFile = ({
   return undefined;
 };
 
+// tsr-skip used in test
 export const getTsConfigPath = ({
   cwd,
   tsconfig,
@@ -186,7 +188,7 @@ export const getTsconfig = ({
   tsconfig?: string;
   fileName: string;
 }) => {
-  const configPath = getTsConfigPath({
+  const resolvedConfigPath = getTsConfigPath({
     cwd,
     tsconfig,
     fileName,
@@ -194,15 +196,17 @@ export const getTsconfig = ({
   });
 
   const { options, fileNames } = ts.parseJsonConfigFileContent(
-    configPath ? ts.readConfigFile(configPath, ts.sys.readFile).config : {},
+    resolvedConfigPath
+      ? ts.readConfigFile(resolvedConfigPath, ts.sys.readFile).config
+      : {},
     ts.sys,
-    configPath ? dirname(configPath) : cwd,
+    resolvedConfigPath ? dirname(resolvedConfigPath) : cwd,
   );
 
   if (!fileNames.includes(fileName)) {
-    if (configPath) {
+    if (resolvedConfigPath) {
       throw new TsconfigError(
-        `${fileName} is not part of the TypeScript project ${resolve(cwd, configPath)}. Hint: use --tsconfig to specify the correct tsconfig file.`,
+        `${fileName} is not part of the TypeScript project ${resolve(cwd, resolvedConfigPath)}. Hint: use --tsconfig to specify the correct tsconfig file.`,
         TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
       );
     }
@@ -216,5 +220,5 @@ export const getTsconfig = ({
     );
   }
 
-  return { options, fileNames, resolvedConfigPath: configPath };
+  return { options, fileNames, resolvedConfigPath: resolvedConfigPath };
 };
