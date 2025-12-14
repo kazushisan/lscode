@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path';
 
 export const TSCONFIG_ERROR_TYPE = {
   TSCONFIG_NOT_FOUND: 'TSCONFIG_NOT_FOUND',
+  FILE_NOT_IN_PROJECT: 'FILE_NOT_IN_PROJECT',
 } as const;
 
 type TsconfigErrorType =
@@ -198,5 +199,12 @@ export const getTsconfig = ({
     configPath ? dirname(configPath) : cwd,
   );
 
-  return { options, fileNames, configFound: !!configPath };
+  if (configPath && !fileNames.includes(fileName)) {
+    throw new TsconfigError(
+      `${fileName} is not part of the TypeScript project. Hint: use --tsconfig to specify the correct tsconfig file.`,
+      TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
+    );
+  }
+
+  return { options, fileNames };
 };

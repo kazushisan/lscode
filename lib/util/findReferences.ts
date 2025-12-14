@@ -19,7 +19,6 @@ interface SymbolInfo {
 
 // tsr-skip used in test
 export const ERROR_TYPE = {
-  FILE_NOT_IN_PROJECT: 'FILE_NOT_IN_PROJECT',
   SYMBOL_NOT_FOUND: 'SYMBOL_NOT_FOUND',
   SYMBOL_INDEX_OUT_OF_RANGE: 'SYMBOL_INDEX_OUT_OF_RANGE',
 } as const;
@@ -54,24 +53,11 @@ export const findReferences = ({
     throw new Error(`Failed to read file: ${fileName}`);
   }
 
-  const { options, fileNames, configFound } = getTsconfig({
+  const { options, fileNames } = getTsconfig({
     cwd,
     tsconfig,
     fileName,
   });
-
-  if (configFound && !fileNames.includes(fileName)) {
-    throw new FindReferencesError(
-      `${fileName} is not part of the TypeScript project. Hint: use --tsconfig to specify the correct tsconfig file.`,
-      ERROR_TYPE.FILE_NOT_IN_PROJECT,
-    );
-  }
-
-  if (!fileNames.includes(fileName)) {
-    throw new Error(
-      `Unexpected error:${fileName} is not included in TypeScript project with {} as tsconfig.`,
-    );
-  }
 
   const host = createLanguageServiceHost(fileNames, options, cwd);
 

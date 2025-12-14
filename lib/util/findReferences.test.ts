@@ -215,10 +215,10 @@ describe('findReferences function', () => {
           });
         },
         (error: Error) => {
-          assert.ok(error instanceof FindReferencesError);
+          assert.ok(error instanceof TsconfigError);
           assert.strictEqual(
-            (error as FindReferencesError).type,
-            ERROR_TYPE.FILE_NOT_IN_PROJECT,
+            (error as TsconfigError).type,
+            TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
           );
           assert.ok(error.message.includes('excluded.ts'));
           return true;
@@ -440,10 +440,10 @@ describe('findReferences function', () => {
           });
         },
         (error: Error) => {
-          assert.ok(error instanceof FindReferencesError);
+          assert.ok(error instanceof TsconfigError);
           assert.strictEqual(
-            (error as FindReferencesError).type,
-            ERROR_TYPE.FILE_NOT_IN_PROJECT,
+            (error as TsconfigError).type,
+            TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
           );
           assert.ok(error.message.includes('exclude.ts'));
           return true;
