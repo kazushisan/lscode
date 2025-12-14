@@ -18,7 +18,7 @@ export class TsconfigError extends Error {
   }
 }
 
-const getTsConfigPath = ({
+export const getTsConfigPath = ({
   cwd,
   tsconfig,
   fileExists,
