@@ -63,11 +63,13 @@ export const findReferences = ({
     );
   }
 
-  const rootFiles = fileNames.includes(fileName)
-    ? fileNames
-    : [...fileNames, fileName];
+  if (!fileNames.includes(fileName)) {
+    throw new Error(
+      `Unexpected error:${fileName} is not included in TypeScript project with {} as tsconfig.`,
+    );
+  }
 
-  const host = createLanguageServiceHost(rootFiles, options, cwd);
+  const host = createLanguageServiceHost(fileNames, options, cwd);
 
   const service = ts.createLanguageService(host);
   const program = service.getProgram();
