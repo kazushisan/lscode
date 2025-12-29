@@ -3,6 +3,7 @@ import { parseArgs } from 'node:util';
 const KNOWN_COMMANDS = [
   'find-references',
   'get-definition',
+  'get-type-definition',
   'rename-symbol',
 ] as const;
 
