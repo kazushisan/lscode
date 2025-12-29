@@ -35,8 +35,9 @@ lscode - TypeScript's LanguageService for AI coding agents
 Usage: lscode <command> [options]
 
 Commands:
-  find-references <file#symbol>  Find all references to a symbol in a file
-  get-definition <file#symbol>   Get the definition of a symbol in a file
+  find-references <file#symbol>           Find all references to a symbol in a file
+  get-definition <file#symbol>            Get the definition of a symbol in a file
+  rename-symbol <file#symbol> <newName>   Rename a symbol across all files
 
 Options:
   --help, -h                      Show help

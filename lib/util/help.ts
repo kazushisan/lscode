@@ -4,8 +4,9 @@ lscode - TypeScript's LanguageService for AI coding agents
 Usage: lscode <command> [options]
 
 Commands:
-  find-references <file#symbol>  Find all references to a symbol in a file
-  get-definition <file#symbol>   Get the definition of a symbol in a file
+  find-references <file#symbol>           Find all references to a symbol in a file
+  get-definition <file#symbol>            Get the definition of a symbol in a file
+  rename-symbol <file#symbol> <newName>   Rename a symbol across all files
 
 Options:
   --help, -h                      Show help
@@ -50,4 +51,24 @@ Examples:
   lscode get-definition src/main.ts#myFunction
   lscode get-definition src/main.ts#myFunction --tsconfig ./tsconfig.json
   lscode get-definition src/main.ts#myFunction -n 1
+`.trim();
+
+export const RENAME_SYMBOL_HELP = `
+lscode rename-symbol - Rename a symbol across all files
+
+Usage: lscode rename-symbol <file#symbol> <newName> [options]
+
+Arguments:
+  <file#symbol>                  File path and symbol in format: path/to/file.ts#symbol
+  <newName>                      New name for the symbol
+
+Options:
+  -n <number>                     Index of the symbol to use (default: 0)
+  --tsconfig <path>               Path to tsconfig.json file
+  --help, -h                      Show help
+
+Examples:
+  lscode rename-symbol src/main.ts#myFunction newFunctionName
+  lscode rename-symbol src/main.ts#myFunction newFunctionName --tsconfig ./tsconfig.json
+  lscode rename-symbol src/main.ts#myFunction newFunctionName -n 1
 `.trim();
