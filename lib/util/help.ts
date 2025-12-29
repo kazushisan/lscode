@@ -7,6 +7,7 @@ Commands:
   find-references <file#symbol>           Find all references to a symbol in a file
   get-definition <file#symbol>            Get the definition of a symbol in a file
   rename-symbol <file#symbol> <newName>   Rename a symbol across all files
+  rename-file <file> <newFile>            Rename a file and update all imports
 
 Options:
   --help, -h                      Show help
@@ -71,4 +72,22 @@ Examples:
   lscode rename-symbol src/main.ts#myFunction newFunctionName
   lscode rename-symbol src/main.ts#myFunction newFunctionName --tsconfig ./tsconfig.json
   lscode rename-symbol src/main.ts#myFunction newFunctionName -n 1
+`.trim();
+
+export const RENAME_FILE_HELP = `
+lscode rename-file - Rename a file and update all imports
+
+Usage: lscode rename-file <file> <newFile> [options]
+
+Arguments:
+  <file>                         Path to the file to rename
+  <newFile>                      New path for the file
+
+Options:
+  --tsconfig <path>               Path to tsconfig.json file
+  --help, -h                      Show help
+
+Examples:
+  lscode rename-file src/utils.ts src/helpers.ts
+  lscode rename-file src/utils.ts src/helpers.ts --tsconfig ./tsconfig.json
 `.trim();

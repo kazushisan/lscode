@@ -1,16 +1,18 @@
 #! /usr/bin/env node
 import { resolve } from 'node:path';
-import { readFileSync } from 'node:fs';
+import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { findReferences, FindReferencesError } from './util/findReferences.js';
 import { getDefinition, GetDefinitionError } from './util/getDefinition.js';
 import { renameSymbol, RenameSymbolError } from './util/renameSymbol.js';
+import { renameFile, RenameFileError } from './util/renameFile.js';
 import {
   parseMainArgs,
   parseFindReferencesArgs,
   parseGetDefinitionArgs,
   parseRenameSymbolArgs,
+  parseRenameFileArgs,
   ArgsError,
 } from './util/args.js';
 import {
@@ -18,6 +20,7 @@ import {
   FIND_REFERENCES_HELP,
   GET_DEFINITION_HELP,
   RENAME_SYMBOL_HELP,
+  RENAME_FILE_HELP,
 } from './util/help.js';
 import {
   formatFindReferences,
@@ -164,6 +167,37 @@ const main = () => {
       applyEdits(edits);
       break;
     }
+    case 'rename-file': {
+      const args = parseRenameFileArgs(commandArgs);
+
+      if ('help' in args) {
+        console.log(RENAME_FILE_HELP);
+        return;
+      }
+
+      const { filePath, newFilePath, tsconfig } = args;
+
+      const cwd = process.cwd();
+      const fileName = resolve(cwd, filePath);
+      const newFileName = resolve(cwd, newFilePath);
+
+      const edits = renameFile({
+        fileName,
+        cwd,
+        tsconfig,
+        newFileName,
+      });
+
+      // Apply file edits - handle both writes and deletions
+      for (const [file, content] of Object.entries(edits)) {
+        if (content === null) {
+          unlinkSync(file);
+        } else {
+          writeFileSync(file, content);
+        }
+      }
+      break;
+    }
     default: {
       console.error(`Error: Unknown command '${command}'`);
       console.log(MAIN_HELP);
@@ -187,6 +221,9 @@ try {
       case 'rename-symbol':
         console.log(RENAME_SYMBOL_HELP);
         break;
+      case 'rename-file':
+        console.log(RENAME_FILE_HELP);
+        break;
     }
     process.exit(1);
   }
@@ -195,6 +232,7 @@ try {
     error instanceof FindReferencesError ||
     error instanceof GetDefinitionError ||
     error instanceof RenameSymbolError ||
+    error instanceof RenameFileError ||
     error instanceof TsconfigError
   ) {
     console.error(`Error: ${error.message}`);
