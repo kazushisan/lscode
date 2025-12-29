@@ -13,18 +13,18 @@ describe('renameFile function', () => {
       const mainFile = path.join(fixturesDir, 'main.ts');
       const newMathFile = path.join(fixturesDir, 'mathematics.ts');
 
-      const result = renameFile({
+      const { edits } = renameFile({
         fileName: mathFile,
         cwd: fixturesDir,
         newFileName: newMathFile,
       });
 
       // main.ts imports from math.ts, so it should be updated
-      assert.strictEqual(Object.keys(result).length, 3);
+      assert.strictEqual(Object.keys(edits).length, 3);
 
       // Check that the import path was updated
       assert.strictEqual(
-        result[mainFile],
+        edits[mainFile],
         `import { add, multiply, PI } from './mathematics.js';
 
 const result1 = add(5, 3);
@@ -46,11 +46,11 @@ calculate();
       );
 
       // Check that old file is marked for deletion
-      assert.strictEqual(result[mathFile], null);
+      assert.strictEqual(edits[mathFile], null);
 
       // Check that new file has the original content
       assert.strictEqual(
-        result[newMathFile],
+        edits[newMathFile],
         `export const add = (a: number, b: number): number => {
   return a + b;
 };
@@ -74,21 +74,21 @@ export const scoped = () => {
       const mainFile = path.join(fixturesDir, 'main.ts');
       const newMainFile = path.join(fixturesDir, 'app.ts');
 
-      const result = renameFile({
+      const { edits } = renameFile({
         fileName: mainFile,
         cwd: fixturesDir,
         newFileName: newMainFile,
       });
 
       // main.ts is not imported by any other file, but should still have rename entries
-      assert.strictEqual(Object.keys(result).length, 2);
+      assert.strictEqual(Object.keys(edits).length, 2);
 
       // Old file marked for deletion
-      assert.strictEqual(result[mainFile], null);
+      assert.strictEqual(edits[mainFile], null);
 
       // New file created with original content
       assert.strictEqual(
-        result[newMainFile],
+        edits[newMainFile],
         `import { add, multiply, PI } from './math.js';
 
 const result1 = add(5, 3);
@@ -115,18 +115,18 @@ calculate();
       const mainFile = path.join(fixturesDir, 'main.ts');
       const newMathFile = path.join(fixturesDir, 'utils/math.ts');
 
-      const result = renameFile({
+      const { edits } = renameFile({
         fileName: mathFile,
         cwd: fixturesDir,
         newFileName: newMathFile,
       });
 
       // main.ts imports from math.ts, so it should be updated
-      assert.strictEqual(Object.keys(result).length, 3);
+      assert.strictEqual(Object.keys(edits).length, 3);
 
       // Check that the import path was updated with the new directory
       assert.strictEqual(
-        result[mainFile],
+        edits[mainFile],
         `import { add, multiply, PI } from './utils/math.js';
 
 const result1 = add(5, 3);
@@ -148,9 +148,9 @@ calculate();
       );
 
       // Check file rename entries
-      assert.strictEqual(result[mathFile], null);
+      assert.strictEqual(edits[mathFile], null);
       assert.strictEqual(
-        result[newMathFile],
+        edits[newMathFile],
         `export const add = (a: number, b: number): number => {
   return a + b;
 };
@@ -212,7 +212,7 @@ export const scoped = () => {
       const mainFile = path.join(customConfigDir, 'main.ts');
       const newUtilsFile = path.join(customConfigDir, 'helpers.ts');
 
-      const result = renameFile({
+      const { edits } = renameFile({
         fileName: utilsFile,
         cwd: customConfigDir,
         tsconfig: 'tsconfig.custom.json',
@@ -220,10 +220,10 @@ export const scoped = () => {
       });
 
       // main.ts imports from utils.ts, so it should be updated
-      assert.strictEqual(Object.keys(result).length, 3);
+      assert.strictEqual(Object.keys(edits).length, 3);
 
       assert.strictEqual(
-        result[mainFile],
+        edits[mainFile],
         `import { square, cube } from './helpers.js';
 
 const result1 = square(5);
@@ -233,10 +233,10 @@ console.log(result1, result2);
 `,
       );
 
-      assert.strictEqual(result[utilsFile], null);
+      assert.strictEqual(edits[utilsFile], null);
 
       assert.strictEqual(
-        result[newUtilsFile],
+        edits[newUtilsFile],
         `export const square = (x: number): number => {
   return x * x;
 };
@@ -302,7 +302,7 @@ export const cube = (x: number): number => {
       const includedFile = path.join(excludedFileDir, 'src/included.ts');
       const newFile = path.join(excludedFileDir, 'src/helper.ts');
 
-      const result = renameFile({
+      const { edits } = renameFile({
         fileName: includedFile,
         cwd: excludedFileDir,
         tsconfig: 'tsconfig.json',
@@ -310,12 +310,12 @@ export const cube = (x: number): number => {
       });
 
       // included.ts is not imported by any other file, but should have rename entries
-      assert.strictEqual(Object.keys(result).length, 2);
+      assert.strictEqual(Object.keys(edits).length, 2);
 
-      assert.strictEqual(result[includedFile], null);
+      assert.strictEqual(edits[includedFile], null);
 
       assert.strictEqual(
-        result[newFile],
+        edits[newFile],
         `export const helper = (x: number): number => {
   return x * 2;
 };
@@ -329,18 +329,18 @@ export const cube = (x: number): number => {
       const mathFile = path.join(fixturesDir, 'math.ts');
       const newMathFile = path.join(fixturesDir, 'arithmetic.ts');
 
-      const result = renameFile({
+      const { edits } = renameFile({
         fileName: mathFile,
         cwd: fixturesDir,
         newFileName: newMathFile,
       });
 
       // Result should be an object
-      assert.strictEqual(typeof result, 'object');
-      assert.ok(!Array.isArray(result));
+      assert.strictEqual(typeof edits, 'object');
+      assert.ok(!Array.isArray(edits));
 
       // Keys should be absolute file paths
-      for (const key of Object.keys(result)) {
+      for (const key of Object.keys(edits)) {
         assert.ok(path.isAbsolute(key));
         assert.ok(key.endsWith('.ts'));
       }
@@ -351,14 +351,14 @@ export const cube = (x: number): number => {
     it('should handle renaming to the same name gracefully', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
 
-      const result = renameFile({
+      const { edits } = renameFile({
         fileName: mathFile,
         cwd: fixturesDir,
         newFileName: mathFile,
       });
 
       // When renaming to the same name, no changes should be made
-      assert.strictEqual(Object.keys(result).length, 0);
+      assert.strictEqual(Object.keys(edits).length, 0);
     });
 
     it('should handle relative file paths', () => {
@@ -366,17 +366,17 @@ export const cube = (x: number): number => {
       const mainFile = path.join(fixturesDir, 'main.ts');
       const newMathFile = path.join(fixturesDir, 'mathutils.ts');
 
-      const result = renameFile({
+      const { edits } = renameFile({
         fileName: 'math.ts',
         cwd: fixturesDir,
         newFileName: 'mathutils.ts',
       });
 
-      assert.strictEqual(Object.keys(result).length, 3);
+      assert.strictEqual(Object.keys(edits).length, 3);
 
       // main.ts imports from math.ts, so it should be updated
       assert.strictEqual(
-        result[mainFile],
+        edits[mainFile],
         `import { add, multiply, PI } from './mathutils.js';
 
 const result1 = add(5, 3);
@@ -398,10 +398,10 @@ calculate();
       );
 
       // Check file rename entries
-      assert.strictEqual(result[mathFile], null);
+      assert.strictEqual(edits[mathFile], null);
 
       assert.strictEqual(
-        result[newMathFile],
+        edits[newMathFile],
         `export const add = (a: number, b: number): number => {
   return a + b;
 };

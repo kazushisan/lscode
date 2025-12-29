@@ -188,7 +188,7 @@ const main = () => {
 
       const symbolIndex = n !== undefined ? n : 0;
 
-      const edits = renameSymbol({
+      const { edits, resolvedConfigPath } = renameSymbol({
         symbol,
         fileName,
         cwd,
@@ -196,6 +196,12 @@ const main = () => {
         n: symbolIndex,
         newName,
       });
+
+      formatGetTsconfig({
+        resolvedConfigPath,
+        cwd,
+        fileName,
+      }).forEach((line) => console.log(line));
 
       applyEdits(edits);
       break;
@@ -214,12 +220,18 @@ const main = () => {
       const fileName = resolve(cwd, filePath);
       const newFileName = resolve(cwd, newFilePath);
 
-      const edits = renameFile({
+      const { edits, resolvedConfigPath } = renameFile({
         fileName,
         cwd,
         tsconfig,
         newFileName,
       });
+
+      formatGetTsconfig({
+        resolvedConfigPath,
+        cwd,
+        fileName,
+      }).forEach((line) => console.log(line));
 
       // Apply file edits - handle both writes and deletions
       for (const [file, content] of Object.entries(edits)) {

@@ -37,13 +37,13 @@ export const renameSymbol = ({
   tsconfig?: string;
   n: number;
   newName: string;
-}): { [fileName: string]: string } => {
+}) => {
   const content = ts.sys.readFile(fileName);
   if (content === undefined) {
     throw new Error(`Failed to read file: ${fileName}`);
   }
 
-  const { options, fileNames } = getTsconfig({
+  const { options, fileNames, resolvedConfigPath } = getTsconfig({
     cwd,
     tsconfig,
     fileName,
@@ -109,7 +109,7 @@ export const renameSymbol = ({
   );
 
   if (!renameLocations || renameLocations.length === 0) {
-    return {};
+    return { edits: {}, resolvedConfigPath };
   }
 
   const changesByFile = renameLocations.reduce(
@@ -127,7 +127,7 @@ export const renameSymbol = ({
     {} as Record<string, TextChange[]>,
   );
 
-  return Object.entries(changesByFile).reduce(
+  const edits = Object.entries(changesByFile).reduce(
     (acc, [file, changes]) => {
       const sourceFile = program.getSourceFile(file);
       if (!sourceFile) {
@@ -145,4 +145,6 @@ export const renameSymbol = ({
     },
     {} as Record<string, string>,
   );
+
+  return { edits, resolvedConfigPath };
 };

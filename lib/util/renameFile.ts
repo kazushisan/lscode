@@ -32,7 +32,7 @@ export const renameFile = ({
   cwd: string;
   tsconfig?: string;
   newFileName: string;
-}): { [fileName: string]: string | null } => {
+}) => {
   const absoluteFileName = path.isAbsolute(fileName)
     ? fileName
     : path.resolve(cwd, fileName);
@@ -48,7 +48,7 @@ export const renameFile = ({
     );
   }
 
-  const { options, fileNames } = getTsconfig({
+  const { options, fileNames, resolvedConfigPath } = getTsconfig({
     cwd,
     tsconfig,
     fileName: absoluteFileName,
@@ -114,5 +114,5 @@ export const renameFile = ({
     result[absoluteNewFileName] = content;
   }
 
-  return result;
+  return { edits: result, resolvedConfigPath };
 };
