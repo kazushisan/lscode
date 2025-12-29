@@ -4,7 +4,11 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { findReferences, FindReferencesError } from './util/findReferences.js';
-import { getDefinition, GetDefinitionError } from './util/getDefinition.js';
+import {
+  getDefinition,
+  GetDefinitionError,
+  OPERATION,
+} from './util/getDefinition.js';
 import { renameSymbol, RenameSymbolError } from './util/renameSymbol.js';
 import {
   parseMainArgs,
@@ -119,6 +123,7 @@ const main = () => {
         cwd,
         tsconfig,
         n: symbolIndex,
+        operation: OPERATION.DEFINITION,
       });
 
       formatGetTsconfig({

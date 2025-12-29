@@ -19,6 +19,14 @@ interface SymbolInfo {
 }
 
 // tsr-skip used in test
+export const OPERATION = {
+  DEFINITION: 'operation.definition',
+  TYPE_DEFINITION: 'operation.type_definition',
+} as const;
+
+export type Operation = (typeof OPERATION)[keyof typeof OPERATION];
+
+// tsr-skip used in test
 export const ERROR_TYPE = {
   SYMBOL_NOT_FOUND: 'SYMBOL_NOT_FOUND',
   SYMBOL_INDEX_OUT_OF_RANGE: 'SYMBOL_INDEX_OUT_OF_RANGE',
@@ -86,12 +94,14 @@ export const getDefinition = ({
   cwd,
   tsconfig,
   n,
+  operation,
 }: {
   symbol: string;
   fileName: string;
   cwd: string;
   tsconfig?: string;
   n: number;
+  operation: Operation;
 }) => {
   const content = ts.sys.readFile(fileName);
   if (content === undefined) {
@@ -142,7 +152,19 @@ export const getDefinition = ({
   const firstDeclaration = declarations[0]!;
   const position = firstDeclaration.getStart();
 
-  const definitionsInfo = service.getDefinitionAtPosition(fileName, position);
+  const definitionsInfo = (() => {
+    switch (operation) {
+      case OPERATION.DEFINITION: {
+        return service.getDefinitionAtPosition(fileName, position);
+      }
+      case OPERATION.TYPE_DEFINITION: {
+        return service.getTypeDefinitionAtPosition(fileName, position);
+      }
+      default: {
+        throw new Error(`Unknown operation: ${operation satisfies never}`);
+      }
+    }
+  })();
 
   const definitions: DefinitionLocation[] = [];
 
