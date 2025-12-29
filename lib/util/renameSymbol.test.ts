@@ -11,7 +11,7 @@ describe('renameSymbol function', () => {
     it('should rename a symbol in a single file', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
       const mainFile = path.join(fixturesDir, 'main.ts');
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'PI',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -20,11 +20,11 @@ describe('renameSymbol function', () => {
       });
 
       // PI is used in math.ts and main.ts
-      assert.strictEqual(Object.keys(result).length, 2);
+      assert.strictEqual(Object.keys(edits).length, 2);
 
       // Check math.ts was renamed
       assert.strictEqual(
-        result[mathFile],
+        edits[mathFile],
         `export const add = (a: number, b: number): number => {
   return a + b;
 };
@@ -45,7 +45,7 @@ export const scoped = () => {
 
       // Check main.ts was updated
       assert.strictEqual(
-        result[mainFile],
+        edits[mainFile],
         `import { add, multiply, TAU } from './math.js';
 
 const result1 = add(5, 3);
@@ -71,7 +71,7 @@ calculate();
       const mathFile = path.join(fixturesDir, 'math.ts');
       const mainFile = path.join(fixturesDir, 'main.ts');
 
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -80,11 +80,11 @@ calculate();
       });
 
       // add is defined in math.ts and used in main.ts
-      assert.strictEqual(Object.keys(result).length, 2);
+      assert.strictEqual(Object.keys(edits).length, 2);
 
       // Check math.ts was renamed
       assert.strictEqual(
-        result[mathFile],
+        edits[mathFile],
         `export const sum = (a: number, b: number): number => {
   return a + b;
 };
@@ -105,7 +105,7 @@ export const scoped = () => {
 
       // Check main.ts import was updated
       assert.strictEqual(
-        result[mainFile],
+        edits[mainFile],
         `import { sum, multiply, PI } from './math.js';
 
 const result1 = sum(5, 3);
@@ -131,7 +131,7 @@ calculate();
       const mathFile = path.join(fixturesDir, 'math.ts');
       const mainFile = path.join(fixturesDir, 'main.ts');
 
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'multiply',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -139,10 +139,10 @@ calculate();
         newName: 'product',
       });
 
-      assert.strictEqual(Object.keys(result).length, 2);
+      assert.strictEqual(Object.keys(edits).length, 2);
 
       assert.strictEqual(
-        result[mathFile],
+        edits[mathFile],
         `export const add = (a: number, b: number): number => {
   return a + b;
 };
@@ -162,7 +162,7 @@ export const scoped = () => {
       );
 
       assert.strictEqual(
-        result[mainFile],
+        edits[mainFile],
         `import { add, product, PI } from './math.js';
 
 const result1 = add(5, 3);
@@ -186,7 +186,7 @@ calculate();
 
     it('should rename scoped function', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'scoped',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -194,10 +194,10 @@ calculate();
         newName: 'scopedFunction',
       });
 
-      assert.strictEqual(Object.keys(result).length, 1);
+      assert.strictEqual(Object.keys(edits).length, 1);
 
       assert.strictEqual(
-        result[mathFile],
+        edits[mathFile],
         `export const add = (a: number, b: number): number => {
   return a + b;
 };
@@ -223,7 +223,7 @@ export const scopedFunction = () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
 
       // n=1 should be the inner 'add' inside scoped function
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -231,11 +231,11 @@ export const scopedFunction = () => {
         newName: 'innerAdd',
       });
 
-      assert.strictEqual(Object.keys(result).length, 1);
+      assert.strictEqual(Object.keys(edits).length, 1);
 
       // The inner add should be renamed, but outer add should remain
       assert.strictEqual(
-        result[mathFile],
+        edits[mathFile],
         `export const add = (a: number, b: number): number => {
   return a + b;
 };
@@ -260,7 +260,7 @@ export const scoped = () => {
       const mainFile = path.join(fixturesDir, 'main.ts');
 
       // Rename inner add (n=1)
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -269,12 +269,12 @@ export const scoped = () => {
       });
 
       // main.ts should not be affected since it uses outer add
-      assert.strictEqual(result[mainFile], undefined);
+      assert.strictEqual(edits[mainFile], undefined);
 
       // Only math.ts should be affected
-      assert.strictEqual(Object.keys(result).length, 1);
+      assert.strictEqual(Object.keys(edits).length, 1);
       assert.strictEqual(
-        result[mathFile],
+        edits[mathFile],
         `export const add = (a: number, b: number): number => {
   return a + b;
 };
@@ -405,7 +405,7 @@ export const scoped = () => {
     it('should work with custom tsconfig path', () => {
       const utilsFile = path.join(customConfigDir, 'utils.ts');
       const mainFile = path.join(customConfigDir, 'main.ts');
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'square',
         fileName: utilsFile,
         cwd: customConfigDir,
@@ -414,9 +414,9 @@ export const scoped = () => {
         newName: 'squareNumber',
       });
 
-      assert.strictEqual(Object.keys(result).length, 2);
+      assert.strictEqual(Object.keys(edits).length, 2);
       assert.strictEqual(
-        result[utilsFile],
+        edits[utilsFile],
         `export const squareNumber = (x: number): number => {
   return x * x;
 };
@@ -427,7 +427,7 @@ export const cube = (x: number): number => {
 `,
       );
       assert.strictEqual(
-        result[mainFile],
+        edits[mainFile],
         `import { squareNumber, cube } from './utils.js';
 
 const result1 = squareNumber(5);
@@ -492,7 +492,7 @@ console.log(result1, result2);
 
     it('should work with file in project when tsconfig is specified', () => {
       const includedFile = path.join(excludedFileDir, 'src/included.ts');
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'helper',
         fileName: includedFile,
         cwd: excludedFileDir,
@@ -501,9 +501,9 @@ console.log(result1, result2);
         newName: 'helperFunction',
       });
 
-      assert.strictEqual(Object.keys(result).length, 1);
+      assert.strictEqual(Object.keys(edits).length, 1);
       assert.strictEqual(
-        result[includedFile],
+        edits[includedFile],
         `export const helperFunction = (x: number): number => {
   return x * 2;
 };
@@ -514,7 +514,7 @@ console.log(result1, result2);
     it('should use tsconfig.json from cwd when tsconfig not specified', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
       const mainFile = path.join(fixturesDir, 'main.ts');
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'PI',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -522,9 +522,9 @@ console.log(result1, result2);
         newName: 'CONSTANT_PI',
       });
 
-      assert.strictEqual(Object.keys(result).length, 2);
+      assert.strictEqual(Object.keys(edits).length, 2);
       assert.strictEqual(
-        result[mathFile],
+        edits[mathFile],
         `export const add = (a: number, b: number): number => {
   return a + b;
 };
@@ -543,7 +543,7 @@ export const scoped = () => {
 `,
       );
       assert.strictEqual(
-        result[mainFile],
+        edits[mainFile],
         `import { add, multiply, CONSTANT_PI } from './math.js';
 
 const result1 = add(5, 3);
@@ -572,7 +572,7 @@ calculate();
         customConfigDir,
         'tsconfig.custom.json',
       );
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'cube',
         fileName: utilsFile,
         cwd: customConfigDir,
@@ -581,9 +581,9 @@ calculate();
         newName: 'cubeValue',
       });
 
-      assert.strictEqual(Object.keys(result).length, 2);
+      assert.strictEqual(Object.keys(edits).length, 2);
       assert.strictEqual(
-        result[utilsFile],
+        edits[utilsFile],
         `export const square = (x: number): number => {
   return x * x;
 };
@@ -594,7 +594,7 @@ export const cubeValue = (x: number): number => {
 `,
       );
       assert.strictEqual(
-        result[mainFile],
+        edits[mainFile],
         `import { square, cubeValue } from './utils.js';
 
 const result1 = square(5);
@@ -609,7 +609,7 @@ console.log(result1, result2);
   describe('result structure', () => {
     it('should return object with file names as keys', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -618,11 +618,11 @@ console.log(result1, result2);
       });
 
       // Result should be an object
-      assert.strictEqual(typeof result, 'object');
-      assert.ok(!Array.isArray(result));
+      assert.strictEqual(typeof edits, 'object');
+      assert.ok(!Array.isArray(edits));
 
       // Keys should be absolute file paths
-      for (const key of Object.keys(result)) {
+      for (const key of Object.keys(edits)) {
         assert.ok(path.isAbsolute(key));
         assert.ok(key.endsWith('.ts'));
       }
@@ -630,7 +630,7 @@ console.log(result1, result2);
 
     it('should return edited content as values', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'PI',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -639,7 +639,7 @@ console.log(result1, result2);
       });
 
       // Values should be strings (file contents)
-      for (const content of Object.values(result)) {
+      for (const content of Object.values(edits)) {
         assert.strictEqual(typeof content, 'string');
         assert.ok(content.length > 0);
       }
@@ -649,7 +649,7 @@ console.log(result1, result2);
       const mathFile = path.join(fixturesDir, 'math.ts');
 
       // Rename scoped inner add - only math.ts should be affected
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -658,10 +658,10 @@ console.log(result1, result2);
       });
 
       // Only math.ts should be in result, not main.ts
-      assert.strictEqual(Object.keys(result).length, 1);
-      assert.ok(result[mathFile]);
+      assert.strictEqual(Object.keys(edits).length, 1);
+      assert.ok(edits[mathFile]);
       const mainFile = path.join(fixturesDir, 'main.ts');
-      assert.strictEqual(result[mainFile], undefined);
+      assert.strictEqual(edits[mainFile], undefined);
     });
   });
 
@@ -670,7 +670,7 @@ console.log(result1, result2);
       const mathFile = path.join(fixturesDir, 'math.ts');
       const mainFile = path.join(fixturesDir, 'main.ts');
 
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -679,9 +679,9 @@ console.log(result1, result2);
       });
 
       // n=0 is the exported add, should affect main.ts
-      assert.strictEqual(Object.keys(result).length, 2);
+      assert.strictEqual(Object.keys(edits).length, 2);
       assert.strictEqual(
-        result[mathFile],
+        edits[mathFile],
         `export const globalAdd = (a: number, b: number): number => {
   return a + b;
 };
@@ -700,7 +700,7 @@ export const scoped = () => {
 `,
       );
       assert.strictEqual(
-        result[mainFile],
+        edits[mainFile],
         `import { globalAdd, multiply, PI } from './math.js';
 
 const result1 = globalAdd(5, 3);
@@ -726,7 +726,7 @@ calculate();
       const mathFile = path.join(fixturesDir, 'math.ts');
       const mainFile = path.join(fixturesDir, 'main.ts');
 
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -735,12 +735,12 @@ calculate();
       });
 
       // n=1 is the inner add, should NOT affect main.ts
-      assert.strictEqual(result[mainFile], undefined);
+      assert.strictEqual(edits[mainFile], undefined);
 
       // Should only affect math.ts
-      assert.strictEqual(Object.keys(result).length, 1);
+      assert.strictEqual(Object.keys(edits).length, 1);
       assert.strictEqual(
-        result[mathFile],
+        edits[mathFile],
         `export const add = (a: number, b: number): number => {
   return a + b;
 };
@@ -765,7 +765,7 @@ export const scoped = () => {
     it('should handle renaming to the same name gracefully', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
 
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'PI',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -774,14 +774,14 @@ export const scoped = () => {
       });
 
       // When renaming to the same name, no changes should be made
-      assert.strictEqual(Object.keys(result).length, 0);
+      assert.strictEqual(Object.keys(edits).length, 0);
     });
 
     it('should handle symbols used multiple times in the same file', () => {
       const mainFile = path.join(fixturesDir, 'main.ts');
       const mathFile = path.join(fixturesDir, 'math.ts');
 
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'add',
         fileName: mathFile,
         cwd: fixturesDir,
@@ -789,11 +789,11 @@ export const scoped = () => {
         newName: 'addNumbers',
       });
 
-      assert.strictEqual(Object.keys(result).length, 2);
+      assert.strictEqual(Object.keys(edits).length, 2);
 
       // main.ts uses add multiple times
       assert.strictEqual(
-        result[mainFile],
+        edits[mainFile],
         `import { addNumbers, multiply, PI } from './math.js';
 
 const result1 = addNumbers(5, 3);
@@ -820,7 +820,7 @@ calculate();
       const mathFile = path.join(fixturesDir, 'math.ts');
 
       // Rename from main.ts perspective
-      const result = renameSymbol({
+      const { edits } = renameSymbol({
         symbol: 'add',
         fileName: mainFile,
         cwd: fixturesDir,
@@ -829,10 +829,10 @@ calculate();
       });
 
       // Both files should be updated
-      assert.strictEqual(Object.keys(result).length, 2);
+      assert.strictEqual(Object.keys(edits).length, 2);
 
       assert.strictEqual(
-        result[mathFile],
+        edits[mathFile],
         `export const addFunc = (a: number, b: number): number => {
   return a + b;
 };
@@ -852,7 +852,7 @@ export const scoped = () => {
       );
 
       assert.strictEqual(
-        result[mainFile],
+        edits[mainFile],
         `import { addFunc, multiply, PI } from './math.js';
 
 const result1 = addFunc(5, 3);
