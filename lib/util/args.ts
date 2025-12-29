@@ -1,6 +1,10 @@
 import { parseArgs } from 'node:util';
 
-const KNOWN_COMMANDS = ['find-references', 'get-definition'] as const;
+const KNOWN_COMMANDS = [
+  'find-references',
+  'get-definition',
+  'rename-symbol',
+] as const;
 
 type Command = (typeof KNOWN_COMMANDS)[number];
 
@@ -33,6 +37,18 @@ type GetDefinitionArgs =
   | {
       filePath: string;
       symbol: string;
+      tsconfig?: string;
+      n?: number;
+    };
+
+type RenameSymbolArgs =
+  | {
+      help: true;
+    }
+  | {
+      filePath: string;
+      symbol: string;
+      newName: string;
       tsconfig?: string;
       n?: number;
     };
@@ -161,6 +177,82 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
   return {
     filePath,
     symbol,
+    tsconfig: values.tsconfig,
+    n,
+  };
+};
+
+export const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
+  const { values, positionals } = parseArgs({
+    args: argv,
+    options: {
+      help: {
+        type: 'boolean',
+        short: 'h',
+      },
+      tsconfig: {
+        type: 'string',
+      },
+      n: {
+        type: 'string',
+        short: 'n',
+      },
+    },
+    allowPositionals: true,
+  });
+
+  if (values.help) {
+    return {
+      help: true,
+    };
+  }
+
+  if (positionals.length < 2) {
+    throw new ArgsError(
+      'Missing required arguments <file#symbol> <newName>',
+      'rename-symbol',
+    );
+  }
+
+  const arg = positionals[0]!;
+  const hashIndex = arg.lastIndexOf('#');
+
+  if (hashIndex === -1) {
+    throw new ArgsError(
+      'Invalid argument format. Expected: path/to/file.ts#symbol',
+      'rename-symbol',
+    );
+  }
+
+  const filePath = arg.substring(0, hashIndex);
+  const symbol = arg.substring(hashIndex + 1);
+
+  if (!filePath || !symbol) {
+    throw new ArgsError(
+      'Invalid argument format. Expected: path/to/file.ts#symbol',
+      'rename-symbol',
+    );
+  }
+
+  const newName = positionals[1]!;
+
+  if (!newName) {
+    throw new ArgsError('Missing required argument <newName>', 'rename-symbol');
+  }
+
+  const n = values.n !== undefined ? parseInt(values.n, 10) : undefined;
+
+  if (n !== undefined && (isNaN(n) || n < 0)) {
+    throw new ArgsError(
+      'Invalid value for -n option. Expected a non-negative integer.',
+      'rename-symbol',
+    );
+  }
+
+  return {
+    filePath,
+    symbol,
+    newName,
     tsconfig: values.tsconfig,
     n,
   };

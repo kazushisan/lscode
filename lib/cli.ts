@@ -5,16 +5,19 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { findReferences, FindReferencesError } from './util/findReferences.js';
 import { getDefinition, GetDefinitionError } from './util/getDefinition.js';
+import { renameSymbol, RenameSymbolError } from './util/renameSymbol.js';
 import {
   parseMainArgs,
   parseFindReferencesArgs,
   parseGetDefinitionArgs,
+  parseRenameSymbolArgs,
   ArgsError,
 } from './util/args.js';
 import {
   MAIN_HELP,
   FIND_REFERENCES_HELP,
   GET_DEFINITION_HELP,
+  RENAME_SYMBOL_HELP,
 } from './util/help.js';
 import {
   formatFindReferences,
@@ -22,6 +25,7 @@ import {
   formatGetTsconfig,
 } from './util/format.js';
 import { TsconfigError } from './util/tsconfig.js';
+import { applyEdits } from './util/edit.js';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -133,6 +137,33 @@ const main = () => {
       lines.forEach((line) => console.log(line));
       break;
     }
+    case 'rename-symbol': {
+      const args = parseRenameSymbolArgs(commandArgs);
+
+      if ('help' in args) {
+        console.log(RENAME_SYMBOL_HELP);
+        return;
+      }
+
+      const { filePath, symbol, newName, tsconfig, n } = args;
+
+      const cwd = process.cwd();
+      const fileName = resolve(cwd, filePath);
+
+      const symbolIndex = n !== undefined ? n : 0;
+
+      const edits = renameSymbol({
+        symbol,
+        fileName,
+        cwd,
+        tsconfig,
+        n: symbolIndex,
+        newName,
+      });
+
+      applyEdits(edits);
+      break;
+    }
     default: {
       console.error(`Error: Unknown command '${command}'`);
       console.log(MAIN_HELP);
@@ -153,6 +184,9 @@ try {
       case 'get-definition':
         console.log(GET_DEFINITION_HELP);
         break;
+      case 'rename-symbol':
+        console.log(RENAME_SYMBOL_HELP);
+        break;
     }
     process.exit(1);
   }
@@ -160,6 +194,7 @@ try {
   if (
     error instanceof FindReferencesError ||
     error instanceof GetDefinitionError ||
+    error instanceof RenameSymbolError ||
     error instanceof TsconfigError
   ) {
     console.error(`Error: ${error.message}`);
