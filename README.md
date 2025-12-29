@@ -21,10 +21,24 @@ lscode provides an agent-friendly CLI with symbol-based addressing (`path/to/fil
 
 lscode is built on lower-level TypeScript LanguageService APIs. Definition lookups return complete, semantically scoped code blocks—not just cursor positions—reducing unnecessary AI calls while enabling richer, context-aware operations.
 
-## Install
+## Quick Start
+
+1. Install lscode.
 
 ```bash
-npm install lscode
+npm install -g lscode
+```
+
+2. Navigate to your TypeScript project.
+
+```bash
+cd /path/to/your/project
+```
+
+3. Try out lscode with your favorite AI coding agent!
+
+```
+Use lscode available in PATH to find references of myFunction in @/src/path/to/file.ts
 ```
 
 ## Usage
