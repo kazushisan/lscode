@@ -2,6 +2,7 @@ import ts from 'typescript';
 import { createLanguageServiceHost } from './languageServiceHost.js';
 import { findSymbol } from './symbol.js';
 import { getTsconfig } from './tsconfig.js';
+import { applyTextChanges, TextChange } from './edit.js';
 
 // tsr-skip used in test
 export const ERROR_TYPE = {
@@ -21,31 +22,6 @@ export class RenameSymbolError extends Error {
     this.type = type;
   }
 }
-
-interface RenameLocation {
-  fileName: string;
-  start: number;
-  length: number;
-}
-
-const applyRenameEdits = (
-  content: string,
-  locations: RenameLocation[],
-  newName: string,
-): string => {
-  // Sort locations in reverse order by start position to avoid offset issues
-  const sortedLocations = [...locations].sort((a, b) => b.start - a.start);
-
-  let result = content;
-  for (const loc of sortedLocations) {
-    result =
-      result.slice(0, loc.start) +
-      newName +
-      result.slice(loc.start + loc.length);
-  }
-
-  return result;
-};
 
 export const renameSymbol = ({
   symbol,
@@ -136,30 +112,30 @@ export const renameSymbol = ({
     return {};
   }
 
-  const locationsByFile = renameLocations.reduce(
+  const changesByFile = renameLocations.reduce(
     (acc, loc) => ({
       ...acc,
       [loc.fileName]: [
         ...(acc[loc.fileName] || []),
         {
-          fileName: loc.fileName,
           start: loc.textSpan.start,
           length: loc.textSpan.length,
+          newText: newName,
         },
       ],
     }),
-    {} as Record<string, RenameLocation[]>,
+    {} as Record<string, TextChange[]>,
   );
 
-  return Object.entries(locationsByFile).reduce(
-    (acc, [file, locations]) => {
+  return Object.entries(changesByFile).reduce(
+    (acc, [file, changes]) => {
       const sourceFile = program.getSourceFile(file);
       if (!sourceFile) {
         return acc;
       }
 
       const fileContent = sourceFile.getFullText();
-      const editedContent = applyRenameEdits(fileContent, locations, newName);
+      const editedContent = applyTextChanges(fileContent, changes);
 
       if (editedContent === fileContent) {
         return acc;

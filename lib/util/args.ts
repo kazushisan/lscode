@@ -5,6 +5,7 @@ const KNOWN_COMMANDS = [
   'get-definition',
   'get-type-definition',
   'rename-symbol',
+  'rename-file',
 ] as const;
 
 type Command = (typeof KNOWN_COMMANDS)[number];
@@ -52,6 +53,16 @@ type RenameSymbolArgs =
       newName: string;
       tsconfig?: string;
       n?: number;
+    };
+
+type RenameFileArgs =
+  | {
+      help: true;
+    }
+  | {
+      filePath: string;
+      newFilePath: string;
+      tsconfig?: string;
     };
 
 export class ArgsError extends Error {
@@ -180,6 +191,52 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
     symbol,
     tsconfig: values.tsconfig,
     n,
+  };
+};
+
+export const parseRenameFileArgs = (argv: string[]): RenameFileArgs => {
+  const { values, positionals } = parseArgs({
+    args: argv,
+    options: {
+      help: {
+        type: 'boolean',
+        short: 'h',
+      },
+      tsconfig: {
+        type: 'string',
+      },
+    },
+    allowPositionals: true,
+  });
+
+  if (values.help) {
+    return {
+      help: true,
+    };
+  }
+
+  if (positionals.length < 2) {
+    throw new ArgsError(
+      'Missing required arguments <file> <newFile>',
+      'rename-file',
+    );
+  }
+
+  const filePath = positionals[0]!;
+  const newFilePath = positionals[1]!;
+
+  if (!filePath) {
+    throw new ArgsError('Missing required argument <file>', 'rename-file');
+  }
+
+  if (!newFilePath) {
+    throw new ArgsError('Missing required argument <newFile>', 'rename-file');
+  }
+
+  return {
+    filePath,
+    newFilePath,
+    tsconfig: values.tsconfig,
   };
 };
 

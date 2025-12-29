@@ -53,6 +53,7 @@ Commands:
   get-definition <file#symbol>            Get the definition of a symbol in a file
   get-type-definition <file#symbol>       Get the type definition of a symbol in a file
   rename-symbol <file#symbol> <newName>   Rename a symbol across all files
+  rename-file <file> <newFile>            Rename a file and update all imports
 
 Options:
   --help, -h                      Show help

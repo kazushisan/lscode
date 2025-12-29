@@ -33,10 +33,7 @@ export const createLanguageServiceHost = (
     readDirectory: ts.sys.readDirectory,
     directoryExists: ts.sys.directoryExists,
     getDirectories: ts.sys.getDirectories,
-
-    getNewLine: () => {
-      throw new Error('getNewLine not implemented');
-    },
+    getNewLine: () => ts.sys.newLine,
     writeFile: () => {
       throw new Error('writeFile not implemented');
     },
