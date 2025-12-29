@@ -2,6 +2,7 @@ import ts from 'typescript';
 import { createLanguageServiceHost } from './languageServiceHost.js';
 import { getTsconfig } from './tsconfig.js';
 import path from 'node:path';
+import { applyTextChanges, TextChange } from './edit.js';
 
 // tsr-skip used in test
 export const ERROR_TYPE = {
@@ -20,27 +21,6 @@ export class RenameFileError extends Error {
     this.type = type;
   }
 }
-
-interface TextChange {
-  start: number;
-  length: number;
-  newText: string;
-}
-
-const applyTextChanges = (content: string, changes: TextChange[]): string => {
-  // Sort changes in reverse order by start position to avoid offset issues
-  const sortedChanges = [...changes].sort((a, b) => b.start - a.start);
-
-  let result = content;
-  for (const change of sortedChanges) {
-    result =
-      result.slice(0, change.start) +
-      change.newText +
-      result.slice(change.start + change.length);
-  }
-
-  return result;
-};
 
 export const renameFile = ({
   fileName,
