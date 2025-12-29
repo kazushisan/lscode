@@ -24,7 +24,7 @@ export const OPERATION = {
   TYPE_DEFINITION: 'operation.type_definition',
 } as const;
 
-export type Operation = (typeof OPERATION)[keyof typeof OPERATION];
+type Operation = (typeof OPERATION)[keyof typeof OPERATION];
 
 // tsr-skip used in test
 export const ERROR_TYPE = {
