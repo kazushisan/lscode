@@ -6,6 +6,7 @@ Usage: lscode <command> [options]
 Commands:
   find-references <file#symbol>           Find all references to a symbol in a file
   get-definition <file#symbol>            Get the definition of a symbol in a file
+  get-type-definition <file#symbol>       Get the type definition of a symbol in a file
   rename-symbol <file#symbol> <newName>   Rename a symbol across all files
 
 Options:
@@ -51,6 +52,25 @@ Examples:
   lscode get-definition src/main.ts#myFunction
   lscode get-definition src/main.ts#myFunction --tsconfig ./tsconfig.json
   lscode get-definition src/main.ts#myFunction -n 1
+`.trim();
+
+export const GET_TYPE_DEFINITION_HELP = `
+lscode get-type-definition - Get the type definition of a symbol in a file
+
+Usage: lscode get-type-definition <file#symbol> [options]
+
+Arguments:
+  <file#symbol>                  File path and symbol in format: path/to/file.ts#symbol
+
+Options:
+  -n <number>                     Index of the symbol to use (default: 0)
+  --tsconfig <path>               Path to tsconfig.json file
+  --help, -h                      Show help
+
+Examples:
+  lscode get-type-definition src/main.ts#myVariable
+  lscode get-type-definition src/main.ts#myVariable --tsconfig ./tsconfig.json
+  lscode get-type-definition src/main.ts#myVariable -n 1
 `.trim();
 
 export const RENAME_SYMBOL_HELP = `

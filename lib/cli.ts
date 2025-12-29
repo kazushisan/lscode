@@ -21,6 +21,7 @@ import {
   MAIN_HELP,
   FIND_REFERENCES_HELP,
   GET_DEFINITION_HELP,
+  GET_TYPE_DEFINITION_HELP,
   RENAME_SYMBOL_HELP,
 } from './util/help.js';
 import {
@@ -102,11 +103,26 @@ const main = () => {
       lines.forEach((line) => console.log(line));
       break;
     }
-    case 'get-definition': {
+    case 'get-definition':
+    case 'get-type-definition': {
       const args = parseGetDefinitionArgs(commandArgs);
 
       if ('help' in args) {
-        console.log(GET_DEFINITION_HELP);
+        console.log(
+          (() => {
+            switch (command) {
+              case 'get-definition': {
+                return GET_DEFINITION_HELP;
+              }
+              case 'get-type-definition': {
+                return GET_TYPE_DEFINITION_HELP;
+              }
+              default: {
+                throw new Error(`Unknown command: ${command satisfies never}`);
+              }
+            }
+          })(),
+        );
         return;
       }
 
@@ -123,7 +139,19 @@ const main = () => {
         cwd,
         tsconfig,
         n: symbolIndex,
-        operation: OPERATION.DEFINITION,
+        operation: (() => {
+          switch (command) {
+            case 'get-definition': {
+              return OPERATION.DEFINITION;
+            }
+            case 'get-type-definition': {
+              return OPERATION.TYPE_DEFINITION;
+            }
+            default: {
+              throw new Error(`Unknown command: ${command satisfies never}`);
+            }
+          }
+        })(),
       });
 
       formatGetTsconfig({
@@ -188,6 +216,9 @@ try {
         break;
       case 'get-definition':
         console.log(GET_DEFINITION_HELP);
+        break;
+      case 'get-type-definition':
+        console.log(GET_TYPE_DEFINITION_HELP);
         break;
       case 'rename-symbol':
         console.log(RENAME_SYMBOL_HELP);
