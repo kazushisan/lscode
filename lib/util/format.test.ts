@@ -6,7 +6,7 @@ import {
   formatGetTsconfig,
 } from './format.js';
 import { findReferences } from './findReferences.js';
-import { getDefinition } from './getDefinition.js';
+import { getDefinition, OPERATION } from './getDefinition.js';
 import { styleText } from 'node:util';
 import path from 'node:path';
 
@@ -185,6 +185,7 @@ describe('formatGetDefinition function', () => {
       fileName: mathFile,
       cwd: fixturesDir,
       n: 0,
+      operation: OPERATION.DEFINITION,
     });
 
     const formatted = formatGetDefinition({
@@ -215,6 +216,7 @@ describe('formatGetDefinition function', () => {
       fileName: mathFile,
       cwd: fixturesDir,
       n: 1,
+      operation: OPERATION.DEFINITION,
     });
 
     const formatted = formatGetDefinition({
@@ -245,6 +247,7 @@ describe('formatGetDefinition function', () => {
       fileName: mathFile,
       cwd: fixturesDir,
       n: 0,
+      operation: OPERATION.DEFINITION,
     });
 
     const formatted = formatGetDefinition({
@@ -274,6 +277,7 @@ describe('formatGetDefinition function', () => {
       fileName: mathFile,
       cwd: fixturesDir,
       n: 0,
+      operation: OPERATION.DEFINITION,
     });
 
     const formatted = formatGetDefinition({

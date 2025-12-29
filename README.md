@@ -51,6 +51,7 @@ Usage: lscode <command> [options]
 Commands:
   find-references <file#symbol>           Find all references to a symbol in a file
   get-definition <file#symbol>            Get the definition of a symbol in a file
+  get-type-definition <file#symbol>       Get the type definition of a symbol in a file
   rename-symbol <file#symbol> <newName>   Rename a symbol across all files
 
 Options:
