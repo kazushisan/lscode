@@ -690,4 +690,108 @@ export const scoped = () => {
       assert.ok(ts.isInterfaceDeclaration(result.declaration));
     });
   });
+
+  describe('symbolsInfo field', () => {
+    it('should return symbolsInfo with correct structure for single symbol', () => {
+      const program = createProgram({
+        'test.ts': 'export const add = (a: number, b: number) => a + b;',
+      });
+
+      const result = resolveSymbol({
+        keyword: 'add',
+        fileName: 'test.ts',
+        n: 0,
+        program,
+      });
+
+      assert.deepStrictEqual(result.symbolsInfo, [
+        {
+          fileName: 'test.ts',
+          line: 0,
+          character: 13,
+          code: 'export const add = (a: number, b: number) => a + b;',
+        },
+      ]);
+    });
+
+    it('should return correct symbolsInfo for constant on specific line', () => {
+      const program = createProgram({
+        'test.ts': `const first = 1;
+export const PI = 3.14159;
+const third = 3;`,
+      });
+
+      const result = resolveSymbol({
+        keyword: 'PI',
+        fileName: 'test.ts',
+        n: 0,
+        program,
+      });
+
+      assert.deepStrictEqual(result.symbolsInfo, [
+        {
+          fileName: 'test.ts',
+          line: 1,
+          character: 13,
+          code: 'export const PI = 3.14159;',
+        },
+      ]);
+    });
+
+    it('should return correct symbolsInfo for function declaration', () => {
+      const program = createProgram({
+        'test.ts': `const first = 1;
+function multiply(a: number, b: number) { return a * b; }
+const third = 3;`,
+      });
+
+      const result = resolveSymbol({
+        keyword: 'multiply',
+        fileName: 'test.ts',
+        n: 0,
+        program,
+      });
+
+      assert.deepStrictEqual(result.symbolsInfo, [
+        {
+          fileName: 'test.ts',
+          line: 1,
+          character: 0,
+          code: 'function multiply(a: number, b: number) { return a * b; }',
+        },
+      ]);
+    });
+
+    it('should return multiple symbolsInfo when there are multiple symbols with same name', () => {
+      const program = createProgram({
+        'test.ts': `export const add = (a: number, b: number) => a + b;
+export const scoped = () => {
+  const add = () => {};
+  return add;
+};`,
+      });
+
+      const result = resolveSymbol({
+        keyword: 'add',
+        fileName: 'test.ts',
+        n: 0,
+        program,
+      });
+
+      assert.deepStrictEqual(result.symbolsInfo, [
+        {
+          fileName: 'test.ts',
+          line: 0,
+          character: 13,
+          code: 'export const add = (a: number, b: number) => a + b;',
+        },
+        {
+          fileName: 'test.ts',
+          line: 2,
+          character: 8,
+          code: '  const add = () => {};',
+        },
+      ]);
+    });
+  });
 });

@@ -1,5 +1,6 @@
 import ts from 'typescript';
 import { forwardMatch } from './match.js';
+import { getLineAtPosition } from './position.js';
 
 const getTokenAtPosition = (
   sourceFile: ts.SourceFile,
@@ -126,5 +127,45 @@ export const resolveSymbol = ({
   return {
     declaration,
     symbol,
+    symbolsInfo: getSymbolsInfo(symbols),
   };
+};
+
+interface SymbolInfo {
+  fileName: string;
+  character: number; // 0-based
+  line: number; // 0-based
+  code: string; // entire line of the symbol's definition
+}
+
+const getSymbolsInfo = (symbols: ts.Symbol[]) => {
+  const symbolsInfo: SymbolInfo[] = [];
+
+  for (const foundSymbol of symbols) {
+    const symbolDeclarations = foundSymbol.getDeclarations();
+    if (!symbolDeclarations || symbolDeclarations.length === 0) {
+      continue;
+    }
+
+    const declaration = symbolDeclarations[0]!;
+    const declarationSourceFile = declaration.getSourceFile();
+    const declarationPosition = declaration.getStart();
+    const { line, character } =
+      declarationSourceFile.getLineAndCharacterOfPosition(declarationPosition);
+
+    // Get the entire line text for context
+    const code = getLineAtPosition(
+      declarationSourceFile.text,
+      declarationPosition,
+    );
+
+    symbolsInfo.push({
+      fileName: declarationSourceFile.fileName,
+      character,
+      line,
+      code,
+    });
+  }
+
+  return symbolsInfo;
 };
