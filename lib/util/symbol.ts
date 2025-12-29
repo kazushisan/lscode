@@ -66,3 +66,65 @@ export const findSymbol = (
 
   return symbols;
 };
+
+class SymbolError extends Error {
+  type: SymbolErrorType;
+
+  constructor(message: string, type: SymbolErrorType) {
+    super(message);
+    this.name = 'SymbolError';
+    this.type = type;
+  }
+}
+
+export const ERROR_TYPE = {
+  NOT_FOUND: 'NOT_FOUND',
+  INDEX_OUT_OF_RANGE: 'INDEX_OUT_OF_RANGE',
+} as const;
+
+type SymbolErrorType = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
+
+export const resolveSymbol = ({
+  keyword,
+  fileName,
+  n,
+  program,
+}: {
+  keyword: string;
+  fileName: string;
+  n: number;
+  program: ts.Program;
+}) => {
+  const symbols = findSymbol(program, fileName, keyword);
+
+  if (symbols.length === 0) {
+    throw new SymbolError(
+      `Symbol '${keyword}' not found in ${fileName}`,
+      ERROR_TYPE.NOT_FOUND,
+    );
+  }
+
+  if (n < 0 || n >= symbols.length) {
+    throw new SymbolError(
+      `Symbol index ${n} out of range. Found ${symbols.length} symbol(s) with name '${keyword}'`,
+      ERROR_TYPE.INDEX_OUT_OF_RANGE,
+    );
+  }
+
+  const symbol = symbols[n]!;
+  const declarations = symbol.getDeclarations();
+
+  if (!declarations || declarations.length === 0) {
+    throw new SymbolError(
+      `Declaration for symbol '${keyword}' not found in`,
+      ERROR_TYPE.NOT_FOUND,
+    );
+  }
+
+  const declaration = declarations[0]!;
+
+  return {
+    declaration,
+    symbol,
+  };
+};
