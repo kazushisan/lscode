@@ -20,26 +20,53 @@ describe('renameFile function', () => {
       });
 
       // main.ts imports from math.ts, so it should be updated
-      assert.ok(result[mainFile], 'main.ts should be in the result');
+      assert.strictEqual(Object.keys(result).length, 3);
 
       // Check that the import path was updated
-      assert.ok(
-        result[mainFile]?.includes("from './mathematics.js'"),
-        'Import path should be updated to mathematics.js',
+      assert.strictEqual(
+        result[mainFile],
+        `import { add, multiply, PI } from './mathematics.js';
+
+const result1 = add(5, 3);
+const result2 = add(10, 20);
+
+const product = multiply(4, 7);
+
+const circumference = 2 * PI * 10;
+
+console.log(result1, result2, product, circumference);
+
+function calculate() {
+  const sum = add(1, 2);
+  return multiply(sum, PI);
+}
+
+calculate();
+`,
       );
 
       // Check that old file is marked for deletion
-      assert.strictEqual(
-        result[mathFile],
-        null,
-        'Old file should be marked for deletion',
-      );
+      assert.strictEqual(result[mathFile], null);
 
-      // Check that new file has content
-      assert.ok(result[newMathFile], 'New file should be in the result');
-      assert.ok(
-        typeof result[newMathFile] === 'string',
-        'New file should have content',
+      // Check that new file has the original content
+      assert.strictEqual(
+        result[newMathFile],
+        `export const add = (a: number, b: number): number => {
+  return a + b;
+};
+
+export const multiply = (a: number, b: number): number => {
+  return a * b;
+};
+
+export const PI = 3.14159;
+
+export const scoped = () => {
+  const add = () => {};
+
+  return add;
+};
+`,
       );
     });
 
@@ -54,16 +81,32 @@ describe('renameFile function', () => {
       });
 
       // main.ts is not imported by any other file, but should still have rename entries
-      // Old file marked for deletion, new file created
+      assert.strictEqual(Object.keys(result).length, 2);
+
+      // Old file marked for deletion
+      assert.strictEqual(result[mainFile], null);
+
+      // New file created with original content
       assert.strictEqual(
-        result[mainFile],
-        null,
-        'Old file should be marked for deletion',
-      );
-      assert.ok(result[newMainFile], 'New file should be in the result');
-      assert.ok(
-        typeof result[newMainFile] === 'string',
-        'New file should have content',
+        result[newMainFile],
+        `import { add, multiply, PI } from './math.js';
+
+const result1 = add(5, 3);
+const result2 = add(10, 20);
+
+const product = multiply(4, 7);
+
+const circumference = 2 * PI * 10;
+
+console.log(result1, result2, product, circumference);
+
+function calculate() {
+  const sum = add(1, 2);
+  return multiply(sum, PI);
+}
+
+calculate();
+`,
       );
     });
 
@@ -79,21 +122,52 @@ describe('renameFile function', () => {
       });
 
       // main.ts imports from math.ts, so it should be updated
-      assert.ok(result[mainFile], 'main.ts should be in the result');
+      assert.strictEqual(Object.keys(result).length, 3);
 
       // Check that the import path was updated with the new directory
-      assert.ok(
-        result[mainFile]?.includes("from './utils/math.js'"),
-        'Import path should be updated to include utils directory',
+      assert.strictEqual(
+        result[mainFile],
+        `import { add, multiply, PI } from './utils/math.js';
+
+const result1 = add(5, 3);
+const result2 = add(10, 20);
+
+const product = multiply(4, 7);
+
+const circumference = 2 * PI * 10;
+
+console.log(result1, result2, product, circumference);
+
+function calculate() {
+  const sum = add(1, 2);
+  return multiply(sum, PI);
+}
+
+calculate();
+`,
       );
 
       // Check file rename entries
+      assert.strictEqual(result[mathFile], null);
       assert.strictEqual(
-        result[mathFile],
-        null,
-        'Old file should be marked for deletion',
+        result[newMathFile],
+        `export const add = (a: number, b: number): number => {
+  return a + b;
+};
+
+export const multiply = (a: number, b: number): number => {
+  return a * b;
+};
+
+export const PI = 3.14159;
+
+export const scoped = () => {
+  const add = () => {};
+
+  return add;
+};
+`,
       );
-      assert.ok(result[newMathFile], 'New file should be in the result');
     });
   });
 
@@ -146,10 +220,31 @@ describe('renameFile function', () => {
       });
 
       // main.ts imports from utils.ts, so it should be updated
-      assert.ok(result[mainFile], 'main.ts should be in the result');
-      assert.ok(
-        result[mainFile]?.includes("from './helpers.js'"),
-        'Import path should be updated to helpers.js',
+      assert.strictEqual(Object.keys(result).length, 3);
+
+      assert.strictEqual(
+        result[mainFile],
+        `import { square, cube } from './helpers.js';
+
+const result1 = square(5);
+const result2 = cube(3);
+
+console.log(result1, result2);
+`,
+      );
+
+      assert.strictEqual(result[utilsFile], null);
+
+      assert.strictEqual(
+        result[newUtilsFile],
+        `export const square = (x: number): number => {
+  return x * x;
+};
+
+export const cube = (x: number): number => {
+  return x * x * x;
+};
+`,
       );
     });
 
@@ -215,53 +310,16 @@ describe('renameFile function', () => {
       });
 
       // included.ts is not imported by any other file, but should have rename entries
+      assert.strictEqual(Object.keys(result).length, 2);
+
+      assert.strictEqual(result[includedFile], null);
+
       assert.strictEqual(
-        result[includedFile],
-        null,
-        'Old file should be marked for deletion',
-      );
-      assert.ok(result[newFile], 'New file should be in the result');
-    });
-
-    it('should use tsconfig.json from cwd when tsconfig not specified', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-      const mainFile = path.join(fixturesDir, 'main.ts');
-      const newMathFile = path.join(fixturesDir, 'calc.ts');
-
-      const result = renameFile({
-        fileName: mathFile,
-        cwd: fixturesDir,
-        newFileName: newMathFile,
-      });
-
-      // main.ts imports from math.ts, so it should be updated
-      assert.ok(result[mainFile], 'main.ts should be in the result');
-      assert.ok(
-        result[mainFile]?.includes("from './calc.js'"),
-        'Import path should be updated to calc.js',
-      );
-    });
-
-    it('should work with absolute path to tsconfig', () => {
-      const utilsFile = path.join(customConfigDir, 'utils.ts');
-      const mainFile = path.join(customConfigDir, 'main.ts');
-      const newUtilsFile = path.join(customConfigDir, 'functions.ts');
-      const absoluteTsConfigPath = path.join(
-        customConfigDir,
-        'tsconfig.custom.json',
-      );
-
-      const result = renameFile({
-        fileName: utilsFile,
-        cwd: customConfigDir,
-        tsconfig: absoluteTsConfigPath,
-        newFileName: newUtilsFile,
-      });
-
-      assert.ok(result[mainFile], 'main.ts should be in the result');
-      assert.ok(
-        result[mainFile]?.includes("from './functions.js'"),
-        'Import path should be updated to functions.js',
+        result[newFile],
+        `export const helper = (x: number): number => {
+  return x * 2;
+};
+`,
       );
     });
   });
@@ -286,50 +344,6 @@ describe('renameFile function', () => {
         assert.ok(path.isAbsolute(key));
         assert.ok(key.endsWith('.ts'));
       }
-    });
-
-    it('should return edited content as values or null for deletions', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-      const newMathFile = path.join(fixturesDir, 'mathlib.ts');
-
-      const result = renameFile({
-        fileName: mathFile,
-        cwd: fixturesDir,
-        newFileName: newMathFile,
-      });
-
-      // Values should be strings (file contents) or null (for deletion)
-      for (const [file, content] of Object.entries(result)) {
-        if (file === mathFile) {
-          // Old file should be null (deletion)
-          assert.strictEqual(content, null);
-        } else {
-          // Other files should be strings
-          assert.strictEqual(typeof content, 'string');
-          assert.ok(content && content.length > 0);
-        }
-      }
-    });
-
-    it('should include file rename entries even when no imports reference the file', () => {
-      const mainFile = path.join(fixturesDir, 'main.ts');
-      const newMainFile = path.join(fixturesDir, 'entry.ts');
-
-      // Rename main.ts which is not imported by anyone
-      const result = renameFile({
-        fileName: mainFile,
-        cwd: fixturesDir,
-        newFileName: newMainFile,
-      });
-
-      // Should have exactly 2 entries: old file deletion and new file creation
-      assert.strictEqual(Object.keys(result).length, 2);
-      assert.strictEqual(
-        result[mainFile],
-        null,
-        'Old file should be marked for deletion',
-      );
-      assert.ok(result[newMainFile], 'New file should be in the result');
     });
   });
 
@@ -358,85 +372,52 @@ describe('renameFile function', () => {
         newFileName: 'mathutils.ts',
       });
 
+      assert.strictEqual(Object.keys(result).length, 3);
+
       // main.ts imports from math.ts, so it should be updated
-      assert.ok(result[mainFile], 'main.ts should be in the result');
-      assert.ok(
-        result[mainFile]?.includes("from './mathutils.js'"),
-        'Import path should be updated to mathutils.js',
+      assert.strictEqual(
+        result[mainFile],
+        `import { add, multiply, PI } from './mathutils.js';
+
+const result1 = add(5, 3);
+const result2 = add(10, 20);
+
+const product = multiply(4, 7);
+
+const circumference = 2 * PI * 10;
+
+console.log(result1, result2, product, circumference);
+
+function calculate() {
+  const sum = add(1, 2);
+  return multiply(sum, PI);
+}
+
+calculate();
+`,
       );
 
       // Check file rename entries
+      assert.strictEqual(result[mathFile], null);
+
       assert.strictEqual(
-        result[mathFile],
-        null,
-        'Old file should be marked for deletion',
-      );
-      assert.ok(result[newMathFile], 'New file should be in the result');
-    });
+        result[newMathFile],
+        `export const add = (a: number, b: number): number => {
+  return a + b;
+};
 
-    it('should preserve other import statements when updating', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-      const mainFile = path.join(fixturesDir, 'main.ts');
-      const newMathFile = path.join(fixturesDir, 'newmath.ts');
+export const multiply = (a: number, b: number): number => {
+  return a * b;
+};
 
-      const result = renameFile({
-        fileName: mathFile,
-        cwd: fixturesDir,
-        newFileName: newMathFile,
-      });
+export const PI = 3.14159;
 
-      // Verify the updated main.ts still has valid structure
-      const mainContent = result[mainFile];
-      assert.ok(
-        mainContent && typeof mainContent === 'string',
-        'main.ts should be in the result with content',
-      );
+export const scoped = () => {
+  const add = () => {};
 
-      // Check that the file still contains the import with correct symbols
-      assert.ok(mainContent.includes('add'), 'Should still contain add import');
-      assert.ok(
-        mainContent.includes('multiply'),
-        'Should still contain multiply import',
-      );
-      assert.ok(mainContent.includes('PI'), 'Should still contain PI import');
-    });
-  });
-
-  describe('path handling', () => {
-    it('should handle absolute paths correctly', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-      const mainFile = path.join(fixturesDir, 'main.ts');
-      const newMathFile = path.join(fixturesDir, 'absolute-math.ts');
-
-      const result = renameFile({
-        fileName: mathFile,
-        cwd: fixturesDir,
-        newFileName: newMathFile,
-      });
-
-      assert.ok(result[mainFile], 'main.ts should be in the result');
-      assert.ok(
-        result[mainFile]?.includes("from './absolute-math.js'"),
-        'Import path should be updated correctly',
-      );
-    });
-
-    it('should handle renaming with extension change', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-      const mainFile = path.join(fixturesDir, 'main.ts');
-      const newMathFile = path.join(fixturesDir, 'math-renamed.ts');
-
-      const result = renameFile({
-        fileName: mathFile,
-        cwd: fixturesDir,
-        newFileName: newMathFile,
-      });
-
-      assert.ok(result[mainFile], 'main.ts should be in the result');
-      // The import statement should use .js extension as per the project's module resolution
-      assert.ok(
-        result[mainFile]?.includes("from './math-renamed.js'"),
-        'Import path should be updated with .js extension',
+  return add;
+};
+`,
       );
     });
   });
