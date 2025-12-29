@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import ts from 'typescript';
-import { findSymbol } from './symbol.js';
+import { findSymbol, resolveSymbol, ERROR_TYPE } from './symbol.js';
 
 const createProgram = (files: { [fileName: string]: string }) => {
   const compilerOptions: ts.CompilerOptions = {
@@ -385,6 +385,309 @@ function test() {
       const symbols = findSymbol(program, 'test.ts', 'myVar');
       assert.strictEqual(symbols.length, 1);
       assert.strictEqual(symbols[0]?.getName(), 'myVar');
+    });
+  });
+});
+
+describe('resolveSymbol function', () => {
+  describe('successful resolution', () => {
+    it('should resolve a symbol and return declaration and symbol', () => {
+      const program = createProgram({
+        'test.ts': 'export const add = (a: number, b: number) => a + b;',
+      });
+
+      const result = resolveSymbol({
+        keyword: 'add',
+        fileName: 'test.ts',
+        n: 0,
+        program,
+      });
+
+      assert.ok(result.declaration);
+      assert.ok(result.symbol);
+      assert.strictEqual(result.symbol.getName(), 'add');
+    });
+
+    it('should resolve a function declaration', () => {
+      const program = createProgram({
+        'test.ts': 'function multiply(a: number, b: number) { return a * b; }',
+      });
+
+      const result = resolveSymbol({
+        keyword: 'multiply',
+        fileName: 'test.ts',
+        n: 0,
+        program,
+      });
+
+      assert.ok(result.declaration);
+      assert.strictEqual(result.symbol.getName(), 'multiply');
+    });
+
+    it('should resolve a constant declaration', () => {
+      const program = createProgram({
+        'test.ts': 'export const PI = 3.14159;',
+      });
+
+      const result = resolveSymbol({
+        keyword: 'PI',
+        fileName: 'test.ts',
+        n: 0,
+        program,
+      });
+
+      assert.ok(result.declaration);
+      assert.strictEqual(result.symbol.getName(), 'PI');
+    });
+
+    it('should resolve imported symbol', () => {
+      const program = createProgram({
+        'math.ts': 'export const add = (a: number, b: number) => a + b;',
+        'main.ts': 'import { add } from "./math"; const result = add(1, 2);',
+      });
+
+      const result = resolveSymbol({
+        keyword: 'add',
+        fileName: 'main.ts',
+        n: 0,
+        program,
+      });
+
+      assert.ok(result.declaration);
+      assert.strictEqual(result.symbol.getName(), 'add');
+    });
+  });
+
+  describe('n parameter', () => {
+    it('should use the nth symbol when n is specified', () => {
+      const program = createProgram({
+        'test.ts': `export const add = (a: number, b: number) => a + b;
+export const scoped = () => {
+  const add = () => {};
+  return add;
+};`,
+      });
+
+      // First symbol (n=0)
+      const result0 = resolveSymbol({
+        keyword: 'add',
+        fileName: 'test.ts',
+        n: 0,
+        program,
+      });
+      assert.ok(result0.declaration);
+      assert.strictEqual(result0.symbol.getName(), 'add');
+
+      // Second symbol (n=1)
+      const result1 = resolveSymbol({
+        keyword: 'add',
+        fileName: 'test.ts',
+        n: 1,
+        program,
+      });
+      assert.ok(result1.declaration);
+      assert.strictEqual(result1.symbol.getName(), 'add');
+    });
+
+    it('should throw INDEX_OUT_OF_RANGE error when n is out of range', () => {
+      const program = createProgram({
+        'test.ts': 'export const add = (a: number, b: number) => a + b;',
+      });
+
+      assert.throws(
+        () => {
+          resolveSymbol({
+            keyword: 'add',
+            fileName: 'test.ts',
+            n: 10, // Out of range
+            program,
+          });
+        },
+        (error: Error) => {
+          assert.strictEqual(error.name, 'SymbolError');
+          assert.ok('type' in error);
+          assert.strictEqual(
+            (error as Error & { type: string }).type,
+            ERROR_TYPE.INDEX_OUT_OF_RANGE,
+          );
+          assert.ok(error.message.includes('10'));
+          assert.ok(error.message.includes('out of range'));
+          return true;
+        },
+      );
+    });
+
+    it('should throw INDEX_OUT_OF_RANGE error when n is negative', () => {
+      const program = createProgram({
+        'test.ts': 'export const add = (a: number, b: number) => a + b;',
+      });
+
+      assert.throws(
+        () => {
+          resolveSymbol({
+            keyword: 'add',
+            fileName: 'test.ts',
+            n: -1,
+            program,
+          });
+        },
+        (error: Error) => {
+          assert.strictEqual(error.name, 'SymbolError');
+          assert.ok('type' in error);
+          assert.strictEqual(
+            (error as Error & { type: string }).type,
+            ERROR_TYPE.INDEX_OUT_OF_RANGE,
+          );
+          return true;
+        },
+      );
+    });
+  });
+
+  describe('error handling', () => {
+    it('should throw NOT_FOUND error when symbol does not exist', () => {
+      const program = createProgram({
+        'test.ts': 'const myVar = 123;',
+      });
+
+      assert.throws(
+        () => {
+          resolveSymbol({
+            keyword: 'nonExistentSymbol',
+            fileName: 'test.ts',
+            n: 0,
+            program,
+          });
+        },
+        (error: Error) => {
+          assert.strictEqual(error.name, 'SymbolError');
+          assert.ok('type' in error);
+          assert.strictEqual(
+            (error as Error & { type: string }).type,
+            ERROR_TYPE.NOT_FOUND,
+          );
+          assert.ok(error.message.includes('nonExistentSymbol'));
+          return true;
+        },
+      );
+    });
+
+    it('should throw NOT_FOUND error when file is empty', () => {
+      const program = createProgram({
+        'test.ts': '',
+      });
+
+      assert.throws(
+        () => {
+          resolveSymbol({
+            keyword: 'anything',
+            fileName: 'test.ts',
+            n: 0,
+            program,
+          });
+        },
+        (error: Error) => {
+          assert.strictEqual(error.name, 'SymbolError');
+          assert.ok('type' in error);
+          assert.strictEqual(
+            (error as Error & { type: string }).type,
+            ERROR_TYPE.NOT_FOUND,
+          );
+          return true;
+        },
+      );
+    });
+
+    it('should throw NOT_FOUND error when file only has comments', () => {
+      const program = createProgram({
+        'test.ts': '// Just a comment\n/* Another comment */',
+      });
+
+      assert.throws(
+        () => {
+          resolveSymbol({
+            keyword: 'comment',
+            fileName: 'test.ts',
+            n: 0,
+            program,
+          });
+        },
+        (error: Error) => {
+          assert.strictEqual(error.name, 'SymbolError');
+          assert.ok('type' in error);
+          assert.strictEqual(
+            (error as Error & { type: string }).type,
+            ERROR_TYPE.NOT_FOUND,
+          );
+          return true;
+        },
+      );
+    });
+  });
+
+  describe('declaration property', () => {
+    it('should return a valid declaration node', () => {
+      const program = createProgram({
+        'test.ts': 'export const myVar = 123;',
+      });
+
+      const result = resolveSymbol({
+        keyword: 'myVar',
+        fileName: 'test.ts',
+        n: 0,
+        program,
+      });
+
+      assert.ok(result.declaration);
+      assert.ok(ts.isVariableDeclaration(result.declaration));
+    });
+
+    it('should return declaration for function', () => {
+      const program = createProgram({
+        'test.ts': 'function myFunc() { return 42; }',
+      });
+
+      const result = resolveSymbol({
+        keyword: 'myFunc',
+        fileName: 'test.ts',
+        n: 0,
+        program,
+      });
+
+      assert.ok(result.declaration);
+      assert.ok(ts.isFunctionDeclaration(result.declaration));
+    });
+
+    it('should return declaration for class', () => {
+      const program = createProgram({
+        'test.ts': 'class MyClass { constructor() {} }',
+      });
+
+      const result = resolveSymbol({
+        keyword: 'MyClass',
+        fileName: 'test.ts',
+        n: 0,
+        program,
+      });
+
+      assert.ok(result.declaration);
+      assert.ok(ts.isClassDeclaration(result.declaration));
+    });
+
+    it('should return declaration for interface', () => {
+      const program = createProgram({
+        'test.ts': 'interface MyInterface { prop: string; }',
+      });
+
+      const result = resolveSymbol({
+        keyword: 'MyInterface',
+        fileName: 'test.ts',
+        n: 0,
+        program,
+      });
+
+      assert.ok(result.declaration);
+      assert.ok(ts.isInterfaceDeclaration(result.declaration));
     });
   });
 });
