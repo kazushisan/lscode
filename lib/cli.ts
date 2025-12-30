@@ -36,6 +36,7 @@ import {
 } from './util/format.js';
 import { TsconfigError } from './util/tsconfig.js';
 import { applyEdits } from './util/edit.js';
+import ts from 'typescript';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -82,6 +83,11 @@ const main = () => {
 
       const cwd = process.cwd();
       const fileName = resolve(cwd, filePath);
+
+      const content = ts.sys.readFile(fileName);
+      if (content === undefined) {
+        throw new Error(`Failed to read file: ${fileName}`);
+      }
 
       const { service, resolvedConfigPath } = setupLanguageService({
         cwd,
