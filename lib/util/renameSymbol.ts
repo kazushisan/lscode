@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { createLanguageServiceHost } from './languageServiceHost.js';
+import { createLanguageServiceHost } from './languageService.js';
 import { findSymbol } from './symbol.js';
 import { getTsconfig } from './tsconfig.js';
 import { applyTextChanges, TextChange } from './edit.js';

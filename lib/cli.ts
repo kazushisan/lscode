@@ -3,7 +3,9 @@ import { resolve } from 'node:path';
 import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { findReferences, FindReferencesError } from './util/findReferences.js';
+import { findReferences } from './util/findReferences.js';
+import { setupLanguageService } from './util/languageService.js';
+import { resolveSymbol, SymbolError } from './util/symbol.js';
 import {
   getDefinition,
   GetDefinitionError,
@@ -34,6 +36,7 @@ import {
 } from './util/format.js';
 import { TsconfigError } from './util/tsconfig.js';
 import { applyEdits } from './util/edit.js';
+import ts from 'typescript';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -75,31 +78,51 @@ const main = () => {
         return;
       }
 
-      const { filePath, symbol, tsconfig, n } = args;
+      const { filePath, symbol, tsconfig } = args;
+      const n = args.n || 0;
 
       const cwd = process.cwd();
       const fileName = resolve(cwd, filePath);
 
-      const symbolIndex = n !== undefined ? n : 0;
+      const content = ts.sys.readFile(fileName);
+      if (content === undefined) {
+        throw new Error(`Failed to read file: ${fileName}`);
+      }
 
-      const result = findReferences({
-        symbol,
-        fileName,
+      const { service, resolvedConfigPath } = setupLanguageService({
         cwd,
         tsconfig,
-        n: symbolIndex,
+        fileName,
+      });
+
+      const program = service.getProgram();
+      if (!program) {
+        throw new Error('Failed to get program from language service');
+      }
+
+      const { declaration, symbolsInfo } = resolveSymbol({
+        keyword: symbol,
+        fileName,
+        n,
+        program,
+      });
+
+      const { references } = findReferences({
+        fileName,
+        declaration,
+        service,
       });
 
       formatGetTsconfig({
-        resolvedConfigPath: result.resolvedConfigPath,
+        resolvedConfigPath,
         cwd,
         fileName,
       }).forEach((line) => console.log(line));
 
       const lines = formatFindReferences({
-        references: result.references,
-        symbols: result.symbols,
-        n: symbolIndex,
+        references,
+        symbols: symbolsInfo,
+        n,
         cwd,
         symbol,
       });
@@ -277,7 +300,7 @@ try {
   }
 
   if (
-    error instanceof FindReferencesError ||
+    error instanceof SymbolError ||
     error instanceof GetDefinitionError ||
     error instanceof RenameSymbolError ||
     error instanceof RenameFileError ||

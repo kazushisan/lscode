@@ -1,4 +1,5 @@
 import ts from 'typescript';
+import { getTsconfig } from './tsconfig.js';
 
 export const createLanguageServiceHost = (
   rootFiles: string[],
@@ -38,4 +39,26 @@ export const createLanguageServiceHost = (
       throw new Error('writeFile not implemented');
     },
   };
+};
+
+export const setupLanguageService = ({
+  cwd,
+  tsconfig,
+  fileName, // used for finding tsconfig
+}: {
+  cwd: string;
+  tsconfig?: string;
+  fileName: string;
+}) => {
+  const { options, fileNames, resolvedConfigPath } = getTsconfig({
+    cwd,
+    tsconfig,
+    fileName,
+  });
+
+  const host = createLanguageServiceHost(fileNames, options, cwd);
+
+  const service = ts.createLanguageService(host);
+
+  return { service, resolvedConfigPath };
 };

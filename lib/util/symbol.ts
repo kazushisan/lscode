@@ -1,5 +1,6 @@
 import ts from 'typescript';
 import { forwardMatch } from './match.js';
+import { getLineAtPosition } from './position.js';
 
 const getTokenAtPosition = (
   sourceFile: ts.SourceFile,
@@ -65,4 +66,107 @@ export const findSymbol = (
   }
 
   return symbols;
+};
+
+export class SymbolError extends Error {
+  type: SymbolErrorType;
+
+  constructor(message: string, type: SymbolErrorType) {
+    super(message);
+    this.name = 'SymbolError';
+    this.type = type;
+  }
+}
+
+// tsr-skip used in test
+export const ERROR_TYPE = {
+  NOT_FOUND: 'NOT_FOUND',
+  INDEX_OUT_OF_RANGE: 'INDEX_OUT_OF_RANGE',
+} as const;
+
+type SymbolErrorType = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
+
+export const resolveSymbol = ({
+  keyword,
+  fileName,
+  n,
+  program,
+}: {
+  keyword: string;
+  fileName: string;
+  n: number;
+  program: ts.Program;
+}) => {
+  const symbols = findSymbol(program, fileName, keyword);
+
+  if (symbols.length === 0) {
+    throw new SymbolError(
+      `Symbol '${keyword}' not found in ${fileName}`,
+      ERROR_TYPE.NOT_FOUND,
+    );
+  }
+
+  if (n < 0 || n >= symbols.length) {
+    throw new SymbolError(
+      `Symbol index ${n} out of range. Found ${symbols.length} symbol(s) with name '${keyword}'`,
+      ERROR_TYPE.INDEX_OUT_OF_RANGE,
+    );
+  }
+
+  const symbol = symbols[n]!;
+  const declarations = symbol.getDeclarations();
+
+  if (!declarations || declarations.length === 0) {
+    throw new SymbolError(
+      `Declaration for symbol '${keyword}' not found in`,
+      ERROR_TYPE.NOT_FOUND,
+    );
+  }
+
+  const declaration = declarations[0]!;
+
+  return {
+    declaration,
+    symbol,
+    symbolsInfo: getSymbolsInfo(symbols),
+  };
+};
+
+interface SymbolInfo {
+  fileName: string;
+  character: number; // 0-based
+  line: number; // 0-based
+  code: string; // entire line of the symbol's definition
+}
+
+const getSymbolsInfo = (symbols: ts.Symbol[]) => {
+  const symbolsInfo: SymbolInfo[] = [];
+
+  for (const foundSymbol of symbols) {
+    const symbolDeclarations = foundSymbol.getDeclarations();
+    if (!symbolDeclarations || symbolDeclarations.length === 0) {
+      continue;
+    }
+
+    const declaration = symbolDeclarations[0]!;
+    const declarationSourceFile = declaration.getSourceFile();
+    const declarationPosition = declaration.getStart();
+    const { line, character } =
+      declarationSourceFile.getLineAndCharacterOfPosition(declarationPosition);
+
+    // Get the entire line text for context
+    const code = getLineAtPosition(
+      declarationSourceFile.text,
+      declarationPosition,
+    );
+
+    symbolsInfo.push({
+      fileName: declarationSourceFile.fileName,
+      character,
+      line,
+      code,
+    });
+  }
+
+  return symbolsInfo;
 };

@@ -6,11 +6,37 @@ import {
   formatGetTsconfig,
 } from './format.js';
 import { findReferences } from './findReferences.js';
+import { setupLanguageService } from './languageService.js';
+import { resolveSymbol } from './symbol.js';
 import { getDefinition, OPERATION } from './getDefinition.js';
 import { styleText } from 'node:util';
 import path from 'node:path';
 
 const fixturesDir = path.join(process.cwd(), 'test/fixtures/basic');
+
+const setup = (fileName: string, keyword: string, n = 0) => {
+  const { service } = setupLanguageService({
+    cwd: fixturesDir,
+    fileName,
+  });
+
+  const program = service.getProgram()!;
+
+  const { declaration, symbolsInfo } = resolveSymbol({
+    keyword,
+    fileName,
+    n,
+    program,
+  });
+
+  const { references } = findReferences({
+    declaration,
+    service,
+    fileName,
+  });
+
+  return { references, symbolsInfo };
+};
 
 describe('formatGetTsconfig function', () => {
   it('should format tsconfig path with [info] styling', () => {
@@ -60,16 +86,11 @@ describe('formatGetTsconfig function', () => {
 describe('formatFindReferences function', () => {
   it('should format references for add function', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const result = findReferences({
-      symbol: 'add',
-      fileName: mathFile,
-      cwd: fixturesDir,
-      n: 0,
-    });
+    const { references, symbolsInfo } = setup(mathFile, 'add');
 
     const formatted = formatFindReferences({
-      references: result.references,
-      symbols: result.symbols,
+      references,
+      symbols: symbolsInfo,
       n: 0,
       cwd: fixturesDir,
       symbol: 'add',
@@ -93,16 +114,11 @@ describe('formatFindReferences function', () => {
 
   it('should format references for add function with n=1', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const result = findReferences({
-      symbol: 'add',
-      fileName: mathFile,
-      cwd: fixturesDir,
-      n: 1,
-    });
+    const { references, symbolsInfo } = setup(mathFile, 'add', 1);
 
     const formatted = formatFindReferences({
-      references: result.references,
-      symbols: result.symbols,
+      references,
+      symbols: symbolsInfo,
       n: 1,
       cwd: fixturesDir,
       symbol: 'add',
@@ -123,16 +139,11 @@ describe('formatFindReferences function', () => {
 
   it('should format references for PI constant', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const result = findReferences({
-      symbol: 'PI',
-      fileName: mathFile,
-      cwd: fixturesDir,
-      n: 0,
-    });
+    const { references, symbolsInfo } = setup(mathFile, 'PI');
 
     const formatted = formatFindReferences({
-      references: result.references,
-      symbols: result.symbols,
+      references,
+      symbols: symbolsInfo,
       n: 0,
       cwd: fixturesDir,
       symbol: 'PI',
@@ -154,16 +165,11 @@ describe('formatFindReferences function', () => {
 
   it('should format references for multiply function', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const result = findReferences({
-      symbol: 'multiply',
-      fileName: mathFile,
-      cwd: fixturesDir,
-      n: 0,
-    });
+    const { references, symbolsInfo } = setup(mathFile, 'multiply');
 
     const formatted = formatFindReferences({
-      references: result.references,
-      symbols: result.symbols,
+      references,
+      symbols: symbolsInfo,
       n: 0,
       cwd: fixturesDir,
       symbol: 'multiply',
