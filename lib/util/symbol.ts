@@ -68,7 +68,7 @@ export const findSymbol = (
   return symbols;
 };
 
-class SymbolError extends Error {
+export class SymbolError extends Error {
   type: SymbolErrorType;
 
   constructor(message: string, type: SymbolErrorType) {
