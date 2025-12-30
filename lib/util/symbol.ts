@@ -78,6 +78,7 @@ export class SymbolError extends Error {
   }
 }
 
+// tsr-skip used in test
 export const ERROR_TYPE = {
   NOT_FOUND: 'NOT_FOUND',
   INDEX_OUT_OF_RANGE: 'INDEX_OUT_OF_RANGE',
