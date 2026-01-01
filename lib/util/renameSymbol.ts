@@ -1,19 +1,14 @@
 import ts from 'typescript';
-import { createLanguageServiceHost } from './languageService.js';
-import { findSymbol } from './symbol.js';
-import { getTsconfig } from './tsconfig.js';
 import { applyTextChanges, TextChange } from './edit.js';
 
 // tsr-skip used in test
 export const ERROR_TYPE = {
-  SYMBOL_NOT_FOUND: 'SYMBOL_NOT_FOUND',
-  SYMBOL_INDEX_OUT_OF_RANGE: 'SYMBOL_INDEX_OUT_OF_RANGE',
   RENAME_NOT_ALLOWED: 'RENAME_NOT_ALLOWED',
 } as const;
 
 type RenameSymbolErrorType = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
 
-export class RenameSymbolError extends Error {
+class RenameSymbolError extends Error {
   type: RenameSymbolErrorType;
 
   constructor(message: string, type: RenameSymbolErrorType) {
@@ -24,68 +19,23 @@ export class RenameSymbolError extends Error {
 }
 
 export const renameSymbol = ({
-  symbol,
   fileName,
-  cwd,
-  tsconfig,
-  n,
+  declaration,
+  service,
   newName,
 }: {
-  symbol: string;
   fileName: string;
-  cwd: string;
-  tsconfig?: string;
-  n: number;
+  declaration: ts.Declaration;
+  service: ts.LanguageService;
   newName: string;
 }) => {
-  const content = ts.sys.readFile(fileName);
-  if (content === undefined) {
-    throw new Error(`Failed to read file: ${fileName}`);
-  }
-
-  const { options, fileNames, resolvedConfigPath } = getTsconfig({
-    cwd,
-    tsconfig,
-    fileName,
-  });
-
-  const host = createLanguageServiceHost(fileNames, options, cwd);
-
-  const service = ts.createLanguageService(host);
   const program = service.getProgram();
 
   if (!program) {
-    throw new Error('Failed to create program');
+    throw new Error('Failed to get program from language service');
   }
 
-  const symbols = findSymbol(program, fileName, symbol);
-
-  if (symbols.length === 0) {
-    throw new RenameSymbolError(
-      `Symbol '${symbol}' not found in ${fileName}`,
-      ERROR_TYPE.SYMBOL_NOT_FOUND,
-    );
-  }
-
-  if (n < 0 || n >= symbols.length) {
-    throw new RenameSymbolError(
-      `Symbol index ${n} out of range. Found ${symbols.length} symbol(s) with name '${symbol}'`,
-      ERROR_TYPE.SYMBOL_INDEX_OUT_OF_RANGE,
-    );
-  }
-
-  const targetSymbol = symbols[n]!;
-  const declarations = targetSymbol.getDeclarations();
-
-  if (!declarations || declarations.length === 0) {
-    throw new RenameSymbolError(
-      `Symbol '${symbol}' not found in ${fileName}`,
-      ERROR_TYPE.SYMBOL_NOT_FOUND,
-    );
-  }
-
-  const firstDeclaration = declarations[0]!;
-  const position = firstDeclaration.getStart();
+  const position = declaration.getStart();
 
   const renameInfo = service.getRenameInfo(fileName, position, {
     allowRenameOfImportPath: false,
@@ -94,7 +44,7 @@ export const renameSymbol = ({
   if (!renameInfo.canRename) {
     throw new RenameSymbolError(
       renameInfo.localizedErrorMessage ||
-        `Cannot rename symbol '${symbol}' at this location`,
+        `Cannot rename symbol at this location`,
       ERROR_TYPE.RENAME_NOT_ALLOWED,
     );
   }
@@ -109,7 +59,7 @@ export const renameSymbol = ({
   );
 
   if (!renameLocations || renameLocations.length === 0) {
-    return { edits: {}, resolvedConfigPath };
+    return { edits: {} };
   }
 
   const changesByFile = renameLocations.reduce(
@@ -146,5 +96,5 @@ export const renameSymbol = ({
     {} as Record<string, string>,
   );
 
-  return { edits, resolvedConfigPath };
+  return { edits };
 };

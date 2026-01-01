@@ -1,21 +1,40 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { renameSymbol, RenameSymbolError, ERROR_TYPE } from './renameSymbol.js';
-import { TsconfigError, TSCONFIG_ERROR_TYPE } from './tsconfig.js';
+import { renameSymbol } from './renameSymbol.js';
+import { setupLanguageService } from './languageService.js';
+import { resolveSymbol } from './symbol.js';
 import path from 'node:path';
 
 const fixturesDir = path.join(process.cwd(), 'test/fixtures/basic');
+
+const setup = (fileName: string, keyword: string, n = 0) => {
+  const { service } = setupLanguageService({
+    cwd: fixturesDir,
+    fileName,
+  });
+
+  const program = service.getProgram()!;
+
+  const { declaration } = resolveSymbol({
+    keyword,
+    fileName,
+    n,
+    program,
+  });
+
+  return { declaration, service };
+};
 
 describe('renameSymbol function', () => {
   describe('basic rename', () => {
     it('should rename a symbol in a single file', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
       const mainFile = path.join(fixturesDir, 'main.ts');
+      const { declaration, service } = setup(mathFile, 'PI');
       const { edits } = renameSymbol({
-        symbol: 'PI',
         fileName: mathFile,
-        cwd: fixturesDir,
-        n: 0,
+        declaration,
+        service,
         newName: 'TAU',
       });
 
@@ -70,12 +89,12 @@ calculate();
     it('should rename a function and update all references', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
       const mainFile = path.join(fixturesDir, 'main.ts');
+      const { declaration, service } = setup(mathFile, 'add');
 
       const { edits } = renameSymbol({
-        symbol: 'add',
         fileName: mathFile,
-        cwd: fixturesDir,
-        n: 0,
+        declaration,
+        service,
         newName: 'sum',
       });
 
@@ -130,12 +149,12 @@ calculate();
     it('should rename multiply function across files', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
       const mainFile = path.join(fixturesDir, 'main.ts');
+      const { declaration, service } = setup(mathFile, 'multiply');
 
       const { edits } = renameSymbol({
-        symbol: 'multiply',
         fileName: mathFile,
-        cwd: fixturesDir,
-        n: 0,
+        declaration,
+        service,
         newName: 'product',
       });
 
@@ -186,11 +205,11 @@ calculate();
 
     it('should rename scoped function', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
+      const { declaration, service } = setup(mathFile, 'scoped');
       const { edits } = renameSymbol({
-        symbol: 'scoped',
         fileName: mathFile,
-        cwd: fixturesDir,
-        n: 0,
+        declaration,
+        service,
         newName: 'scopedFunction',
       });
 
@@ -223,11 +242,11 @@ export const scopedFunction = () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
 
       // n=1 should be the inner 'add' inside scoped function
+      const { declaration, service } = setup(mathFile, 'add', 1);
       const { edits } = renameSymbol({
-        symbol: 'add',
         fileName: mathFile,
-        cwd: fixturesDir,
-        n: 1,
+        declaration,
+        service,
         newName: 'innerAdd',
       });
 
@@ -260,11 +279,11 @@ export const scoped = () => {
       const mainFile = path.join(fixturesDir, 'main.ts');
 
       // Rename inner add (n=1)
+      const { declaration, service } = setup(mathFile, 'add', 1);
       const { edits } = renameSymbol({
-        symbol: 'add',
         fileName: mathFile,
-        cwd: fixturesDir,
-        n: 1,
+        declaration,
+        service,
         newName: 'innerSum',
       });
 
@@ -295,325 +314,14 @@ export const scoped = () => {
     });
   });
 
-  describe('error handling', () => {
-    it('should throw SYMBOL_NOT_FOUND error when symbol does not exist', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-
-      assert.throws(
-        () => {
-          renameSymbol({
-            symbol: 'nonExistentSymbol',
-            fileName: mathFile,
-            cwd: fixturesDir,
-            n: 0,
-            newName: 'newName',
-          });
-        },
-        (error: Error) => {
-          assert.ok(error instanceof RenameSymbolError);
-          assert.strictEqual(
-            (error as RenameSymbolError).type,
-            ERROR_TYPE.SYMBOL_NOT_FOUND,
-          );
-          assert.ok(error.message.includes('nonExistentSymbol'));
-          return true;
-        },
-      );
-    });
-
-    it('should throw SYMBOL_INDEX_OUT_OF_RANGE error when n is out of range', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-
-      assert.throws(
-        () => {
-          renameSymbol({
-            symbol: 'add',
-            fileName: mathFile,
-            cwd: fixturesDir,
-            n: 10,
-            newName: 'newName',
-          });
-        },
-        (error: Error) => {
-          assert.ok(error instanceof RenameSymbolError);
-          assert.strictEqual(
-            (error as RenameSymbolError).type,
-            ERROR_TYPE.SYMBOL_INDEX_OUT_OF_RANGE,
-          );
-          assert.ok(error.message.includes('10'));
-          assert.ok(error.message.includes('out of range'));
-          return true;
-        },
-      );
-    });
-
-    it('should throw SYMBOL_INDEX_OUT_OF_RANGE error when n is negative', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-
-      assert.throws(
-        () => {
-          renameSymbol({
-            symbol: 'add',
-            fileName: mathFile,
-            cwd: fixturesDir,
-            n: -1,
-            newName: 'newName',
-          });
-        },
-        (error: Error) => {
-          assert.ok(error instanceof RenameSymbolError);
-          assert.strictEqual(
-            (error as RenameSymbolError).type,
-            ERROR_TYPE.SYMBOL_INDEX_OUT_OF_RANGE,
-          );
-          return true;
-        },
-      );
-    });
-
-    it('should throw error when file does not exist', () => {
-      const nonExistentFile = path.join(fixturesDir, 'nonexistent.ts');
-
-      assert.throws(
-        () => {
-          renameSymbol({
-            symbol: 'add',
-            fileName: nonExistentFile,
-            cwd: fixturesDir,
-            n: 0,
-            newName: 'newName',
-          });
-        },
-        (error: Error) => {
-          assert.ok(error.message.includes('Failed to read file'));
-          return true;
-        },
-      );
-    });
-  });
-
-  describe('with tsconfig parameter', () => {
-    const customConfigDir = path.join(
-      process.cwd(),
-      'test/fixtures/custom-config',
-    );
-    const excludedFileDir = path.join(
-      process.cwd(),
-      'test/fixtures/excluded-file',
-    );
-
-    it('should work with custom tsconfig path', () => {
-      const utilsFile = path.join(customConfigDir, 'utils.ts');
-      const mainFile = path.join(customConfigDir, 'main.ts');
-      const { edits } = renameSymbol({
-        symbol: 'square',
-        fileName: utilsFile,
-        cwd: customConfigDir,
-        tsconfig: 'tsconfig.custom.json',
-        n: 0,
-        newName: 'squareNumber',
-      });
-
-      assert.strictEqual(Object.keys(edits).length, 2);
-      assert.strictEqual(
-        edits[utilsFile],
-        `export const squareNumber = (x: number): number => {
-  return x * x;
-};
-
-export const cube = (x: number): number => {
-  return x * x * x;
-};
-`,
-      );
-      assert.strictEqual(
-        edits[mainFile],
-        `import { squareNumber, cube } from './utils.js';
-
-const result1 = squareNumber(5);
-const result2 = cube(3);
-
-console.log(result1, result2);
-`,
-      );
-    });
-
-    it('should throw TSCONFIG_NOT_FOUND error when config file does not exist', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-
-      assert.throws(
-        () => {
-          renameSymbol({
-            symbol: 'add',
-            fileName: mathFile,
-            cwd: fixturesDir,
-            tsconfig: 'nonexistent.json',
-            n: 0,
-            newName: 'newName',
-          });
-        },
-        (error: Error) => {
-          assert.ok(error instanceof TsconfigError);
-          assert.strictEqual(
-            (error as TsconfigError).type,
-            TSCONFIG_ERROR_TYPE.TSCONFIG_NOT_FOUND,
-          );
-          assert.ok(error.message.includes('nonexistent.json'));
-          return true;
-        },
-      );
-    });
-
-    it('should throw FILE_NOT_IN_PROJECT error when file is not in project', () => {
-      const excludedFile = path.join(excludedFileDir, 'excluded.ts');
-
-      assert.throws(
-        () => {
-          renameSymbol({
-            symbol: 'excluded',
-            fileName: excludedFile,
-            cwd: excludedFileDir,
-            tsconfig: 'tsconfig.json',
-            n: 0,
-            newName: 'newName',
-          });
-        },
-        (error: Error) => {
-          assert.ok(error instanceof TsconfigError);
-          assert.strictEqual(
-            (error as TsconfigError).type,
-            TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
-          );
-          assert.ok(error.message.includes('excluded.ts'));
-          return true;
-        },
-      );
-    });
-
-    it('should work with file in project when tsconfig is specified', () => {
-      const includedFile = path.join(excludedFileDir, 'src/included.ts');
-      const { edits } = renameSymbol({
-        symbol: 'helper',
-        fileName: includedFile,
-        cwd: excludedFileDir,
-        tsconfig: 'tsconfig.json',
-        n: 0,
-        newName: 'helperFunction',
-      });
-
-      assert.strictEqual(Object.keys(edits).length, 1);
-      assert.strictEqual(
-        edits[includedFile],
-        `export const helperFunction = (x: number): number => {
-  return x * 2;
-};
-`,
-      );
-    });
-
-    it('should use tsconfig.json from cwd when tsconfig not specified', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-      const mainFile = path.join(fixturesDir, 'main.ts');
-      const { edits } = renameSymbol({
-        symbol: 'PI',
-        fileName: mathFile,
-        cwd: fixturesDir,
-        n: 0,
-        newName: 'CONSTANT_PI',
-      });
-
-      assert.strictEqual(Object.keys(edits).length, 2);
-      assert.strictEqual(
-        edits[mathFile],
-        `export const add = (a: number, b: number): number => {
-  return a + b;
-};
-
-export const multiply = (a: number, b: number): number => {
-  return a * b;
-};
-
-export const CONSTANT_PI = 3.14159;
-
-export const scoped = () => {
-  const add = () => {};
-
-  return add;
-};
-`,
-      );
-      assert.strictEqual(
-        edits[mainFile],
-        `import { add, multiply, CONSTANT_PI } from './math.js';
-
-const result1 = add(5, 3);
-const result2 = add(10, 20);
-
-const product = multiply(4, 7);
-
-const circumference = 2 * CONSTANT_PI * 10;
-
-console.log(result1, result2, product, circumference);
-
-function calculate() {
-  const sum = add(1, 2);
-  return multiply(sum, CONSTANT_PI);
-}
-
-calculate();
-`,
-      );
-    });
-
-    it('should work with absolute path to tsconfig', () => {
-      const utilsFile = path.join(customConfigDir, 'utils.ts');
-      const mainFile = path.join(customConfigDir, 'main.ts');
-      const absoluteTsConfigPath = path.join(
-        customConfigDir,
-        'tsconfig.custom.json',
-      );
-      const { edits } = renameSymbol({
-        symbol: 'cube',
-        fileName: utilsFile,
-        cwd: customConfigDir,
-        tsconfig: absoluteTsConfigPath,
-        n: 0,
-        newName: 'cubeValue',
-      });
-
-      assert.strictEqual(Object.keys(edits).length, 2);
-      assert.strictEqual(
-        edits[utilsFile],
-        `export const square = (x: number): number => {
-  return x * x;
-};
-
-export const cubeValue = (x: number): number => {
-  return x * x * x;
-};
-`,
-      );
-      assert.strictEqual(
-        edits[mainFile],
-        `import { square, cubeValue } from './utils.js';
-
-const result1 = square(5);
-const result2 = cubeValue(3);
-
-console.log(result1, result2);
-`,
-      );
-    });
-  });
-
   describe('result structure', () => {
     it('should return object with file names as keys', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
+      const { declaration, service } = setup(mathFile, 'add');
       const { edits } = renameSymbol({
-        symbol: 'add',
         fileName: mathFile,
-        cwd: fixturesDir,
-        n: 0,
+        declaration,
+        service,
         newName: 'addition',
       });
 
@@ -630,11 +338,11 @@ console.log(result1, result2);
 
     it('should return edited content as values', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
+      const { declaration, service } = setup(mathFile, 'PI');
       const { edits } = renameSymbol({
-        symbol: 'PI',
         fileName: mathFile,
-        cwd: fixturesDir,
-        n: 0,
+        declaration,
+        service,
         newName: 'PI_VALUE',
       });
 
@@ -649,11 +357,11 @@ console.log(result1, result2);
       const mathFile = path.join(fixturesDir, 'math.ts');
 
       // Rename scoped inner add - only math.ts should be affected
+      const { declaration, service } = setup(mathFile, 'add', 1);
       const { edits } = renameSymbol({
-        symbol: 'add',
         fileName: mathFile,
-        cwd: fixturesDir,
-        n: 1,
+        declaration,
+        service,
         newName: 'localAdd',
       });
 
@@ -670,11 +378,11 @@ console.log(result1, result2);
       const mathFile = path.join(fixturesDir, 'math.ts');
       const mainFile = path.join(fixturesDir, 'main.ts');
 
+      const { declaration, service } = setup(mathFile, 'add', 0);
       const { edits } = renameSymbol({
-        symbol: 'add',
         fileName: mathFile,
-        cwd: fixturesDir,
-        n: 0,
+        declaration,
+        service,
         newName: 'globalAdd',
       });
 
@@ -726,11 +434,11 @@ calculate();
       const mathFile = path.join(fixturesDir, 'math.ts');
       const mainFile = path.join(fixturesDir, 'main.ts');
 
+      const { declaration, service } = setup(mathFile, 'add', 1);
       const { edits } = renameSymbol({
-        symbol: 'add',
         fileName: mathFile,
-        cwd: fixturesDir,
-        n: 1,
+        declaration,
+        service,
         newName: 'scopedAdd',
       });
 
@@ -765,11 +473,11 @@ export const scoped = () => {
     it('should handle renaming to the same name gracefully', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
 
+      const { declaration, service } = setup(mathFile, 'PI');
       const { edits } = renameSymbol({
-        symbol: 'PI',
         fileName: mathFile,
-        cwd: fixturesDir,
-        n: 0,
+        declaration,
+        service,
         newName: 'PI',
       });
 
@@ -781,11 +489,11 @@ export const scoped = () => {
       const mainFile = path.join(fixturesDir, 'main.ts');
       const mathFile = path.join(fixturesDir, 'math.ts');
 
+      const { declaration, service } = setup(mathFile, 'add');
       const { edits } = renameSymbol({
-        symbol: 'add',
         fileName: mathFile,
-        cwd: fixturesDir,
-        n: 0,
+        declaration,
+        service,
         newName: 'addNumbers',
       });
 
@@ -820,11 +528,11 @@ calculate();
       const mathFile = path.join(fixturesDir, 'math.ts');
 
       // Rename from main.ts perspective
+      const { declaration, service } = setup(mainFile, 'add');
       const { edits } = renameSymbol({
-        symbol: 'add',
         fileName: mainFile,
-        cwd: fixturesDir,
-        n: 0,
+        declaration,
+        service,
         newName: 'addFunc',
       });
 
