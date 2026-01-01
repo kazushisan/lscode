@@ -6,15 +6,6 @@ import path from 'node:path';
 
 const fixturesDir = path.join(process.cwd(), 'test/fixtures/basic');
 
-const setup = (fileName: string) => {
-  const { service } = setupLanguageService({
-    cwd: fixturesDir,
-    fileName,
-  });
-
-  return { service };
-};
-
 describe('renameFile function', () => {
   describe('basic file rename', () => {
     it('should update import paths when renaming a file', () => {
@@ -22,7 +13,10 @@ describe('renameFile function', () => {
       const mainFile = path.join(fixturesDir, 'main.ts');
       const newMathFile = path.join(fixturesDir, 'mathematics.ts');
 
-      const { service } = setup(mathFile);
+      const { service } = setupLanguageService({
+        cwd: fixturesDir,
+        fileName: mathFile,
+      });
       const { edits } = renameFile({
         fileName: mathFile,
         newFileName: newMathFile,
@@ -84,7 +78,10 @@ export const scoped = () => {
       const mainFile = path.join(fixturesDir, 'main.ts');
       const newMainFile = path.join(fixturesDir, 'app.ts');
 
-      const { service } = setup(mainFile);
+      const { service } = setupLanguageService({
+        cwd: fixturesDir,
+        fileName: mainFile,
+      });
       const { edits } = renameFile({
         fileName: mainFile,
         newFileName: newMainFile,
@@ -126,7 +123,10 @@ calculate();
       const mainFile = path.join(fixturesDir, 'main.ts');
       const newMathFile = path.join(fixturesDir, 'utils/math.ts');
 
-      const { service } = setup(mathFile);
+      const { service } = setupLanguageService({
+        cwd: fixturesDir,
+        fileName: mathFile,
+      });
       const { edits } = renameFile({
         fileName: mathFile,
         newFileName: newMathFile,
@@ -190,7 +190,10 @@ export const scoped = () => {
 
       // Use a valid file for setup to get service, then try to rename non-existent file
       const mathFile = path.join(fixturesDir, 'math.ts');
-      const { service } = setup(mathFile);
+      const { service } = setupLanguageService({
+        cwd: fixturesDir,
+        fileName: mathFile,
+      });
 
       assert.throws(
         () => {
@@ -218,7 +221,10 @@ export const scoped = () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
       const newMathFile = path.join(fixturesDir, 'arithmetic.ts');
 
-      const { service } = setup(mathFile);
+      const { service } = setupLanguageService({
+        cwd: fixturesDir,
+        fileName: mathFile,
+      });
       const { edits } = renameFile({
         fileName: mathFile,
         newFileName: newMathFile,
@@ -241,7 +247,10 @@ export const scoped = () => {
     it('should handle renaming to the same name gracefully', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
 
-      const { service } = setup(mathFile);
+      const { service } = setupLanguageService({
+        cwd: fixturesDir,
+        fileName: mathFile,
+      });
       const { edits } = renameFile({
         fileName: mathFile,
         newFileName: mathFile,
@@ -257,7 +266,10 @@ export const scoped = () => {
       const mainFile = path.join(fixturesDir, 'main.ts');
       const newMathFile = path.join(fixturesDir, 'mathutils.ts');
 
-      const { service } = setup(mathFile);
+      const { service } = setupLanguageService({
+        cwd: fixturesDir,
+        fileName: mathFile,
+      });
       const { edits } = renameFile({
         fileName: mathFile,
         newFileName: newMathFile,
