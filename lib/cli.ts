@@ -5,17 +5,17 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { findReferences } from './util/findReferences.js';
 import { setupLanguageService } from './util/languageService.js';
-import { resolveSymbol, SymbolError } from './util/symbol.js';
+import { resolveSymbol } from './util/symbol.js';
 import { getDefinition, OPERATION } from './util/getDefinition.js';
 import { renameSymbol } from './util/renameSymbol.js';
 import { renameFile } from './util/renameFile.js';
+import { ArgsError, CommandError } from './util/error.js';
 import {
   parseMainArgs,
   parseFindReferencesArgs,
   parseGetDefinitionArgs,
   parseRenameSymbolArgs,
   parseRenameFileArgs,
-  ArgsError,
 } from './util/args.js';
 import {
   MAIN_HELP,
@@ -30,7 +30,6 @@ import {
   formatGetDefinition,
   formatGetTsconfig,
 } from './util/format.js';
-import { TsconfigError } from './util/tsconfig.js';
 import { applyEdits } from './util/edit.js';
 import ts from 'typescript';
 
@@ -338,11 +337,15 @@ try {
       case 'rename-file':
         console.log(RENAME_FILE_HELP);
         break;
+      default:
+        throw new Error(
+          `Unknown command in ArgsError: ${error.command satisfies never}`,
+        );
     }
     process.exit(1);
   }
 
-  if (error instanceof SymbolError || error instanceof TsconfigError) {
+  if (error instanceof CommandError) {
     console.error(`Error: ${error.message}`);
     process.exit(1);
   }

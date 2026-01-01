@@ -1,22 +1,6 @@
 import ts from 'typescript';
 import { applyTextChanges, TextChange } from './edit.js';
-
-// tsr-skip used in test
-export const ERROR_TYPE = {
-  RENAME_NOT_ALLOWED: 'RENAME_NOT_ALLOWED',
-} as const;
-
-type RenameSymbolErrorType = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
-
-class RenameSymbolError extends Error {
-  type: RenameSymbolErrorType;
-
-  constructor(message: string, type: RenameSymbolErrorType) {
-    super(message);
-    this.name = 'RenameSymbolError';
-    this.type = type;
-  }
-}
+import { CommandError, COMMAND_ERROR_TYPE } from './error.js';
 
 export const renameSymbol = ({
   fileName,
@@ -42,10 +26,10 @@ export const renameSymbol = ({
   });
 
   if (!renameInfo.canRename) {
-    throw new RenameSymbolError(
+    throw new CommandError(
       renameInfo.localizedErrorMessage ||
         `Cannot rename symbol at this location`,
-      ERROR_TYPE.RENAME_NOT_ALLOWED,
+      COMMAND_ERROR_TYPE.RENAME_NOT_ALLOWED,
     );
   }
 

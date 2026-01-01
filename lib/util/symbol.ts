@@ -1,6 +1,7 @@
 import ts from 'typescript';
 import { forwardMatch } from './match.js';
 import { getLineAtPosition } from './position.js';
+import { CommandError, COMMAND_ERROR_TYPE } from './error.js';
 
 const getTokenAtPosition = (
   sourceFile: ts.SourceFile,
@@ -69,24 +70,6 @@ export const findSymbol = (
   return symbols;
 };
 
-export class SymbolError extends Error {
-  type: SymbolErrorType;
-
-  constructor(message: string, type: SymbolErrorType) {
-    super(message);
-    this.name = 'SymbolError';
-    this.type = type;
-  }
-}
-
-// tsr-skip used in test
-export const ERROR_TYPE = {
-  NOT_FOUND: 'NOT_FOUND',
-  INDEX_OUT_OF_RANGE: 'INDEX_OUT_OF_RANGE',
-} as const;
-
-type SymbolErrorType = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
-
 export const resolveSymbol = ({
   keyword,
   fileName,
@@ -101,16 +84,16 @@ export const resolveSymbol = ({
   const symbols = findSymbol(program, fileName, keyword);
 
   if (symbols.length === 0) {
-    throw new SymbolError(
+    throw new CommandError(
       `Symbol '${keyword}' not found in ${fileName}`,
-      ERROR_TYPE.NOT_FOUND,
+      COMMAND_ERROR_TYPE.SYMBOL_NOT_FOUND,
     );
   }
 
   if (n < 0 || n >= symbols.length) {
-    throw new SymbolError(
+    throw new CommandError(
       `Symbol index ${n} out of range. Found ${symbols.length} symbol(s) with name '${keyword}'`,
-      ERROR_TYPE.INDEX_OUT_OF_RANGE,
+      COMMAND_ERROR_TYPE.SYMBOL_INDEX_OUT_OF_RANGE,
     );
   }
 
@@ -118,9 +101,9 @@ export const resolveSymbol = ({
   const declarations = symbol.getDeclarations();
 
   if (!declarations || declarations.length === 0) {
-    throw new SymbolError(
+    throw new CommandError(
       `Declaration for symbol '${keyword}' not found in`,
-      ERROR_TYPE.NOT_FOUND,
+      COMMAND_ERROR_TYPE.SYMBOL_NOT_FOUND,
     );
   }
 

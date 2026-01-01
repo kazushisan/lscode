@@ -2,11 +2,8 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import ts from 'typescript';
 import picomatch from 'picomatch';
-import {
-  getTsConfigPath,
-  TsconfigError,
-  TSCONFIG_ERROR_TYPE,
-} from './tsconfig.js';
+import { getTsConfigPath } from './tsconfig.js';
+import { CommandError, COMMAND_ERROR_TYPE } from './error.js';
 import { relative } from 'node:path';
 
 type ReadDirectory = ts.ParseConfigHost['readDirectory'];
@@ -71,7 +68,7 @@ describe('getTsConfigPath', () => {
       assert.strictEqual(result, '/other/tsconfig.json');
     });
 
-    it('should throw TsconfigError when config file does not exist', () => {
+    it('should throw CommandError when config file does not exist', () => {
       const files = new Map<string, string>();
 
       assert.throws(
@@ -84,10 +81,10 @@ describe('getTsConfigPath', () => {
           });
         },
         (error: Error) => {
-          assert.ok(error instanceof TsconfigError);
+          assert.ok(error instanceof CommandError);
           assert.strictEqual(
-            (error as TsconfigError).type,
-            TSCONFIG_ERROR_TYPE.TSCONFIG_NOT_FOUND,
+            (error as CommandError).type,
+            COMMAND_ERROR_TYPE.TSCONFIG_NOT_FOUND,
           );
           assert.ok(error.message.includes('nonexistent.json'));
           return true;
