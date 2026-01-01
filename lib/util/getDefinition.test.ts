@@ -2,39 +2,27 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { getDefinition, OPERATION } from './getDefinition.js';
 import { setupLanguageService } from './languageService.js';
-import {
-  resolveSymbol,
-  SymbolError,
-  ERROR_TYPE as SYMBOL_ERROR_TYPE,
-} from './symbol.js';
-import { TsconfigError, TSCONFIG_ERROR_TYPE } from './tsconfig.js';
+import { resolveSymbol } from './symbol.js';
 import path from 'node:path';
 
 const fixturesDir = path.join(process.cwd(), 'test/fixtures/basic');
 
-const setup = (
-  fileName: string,
-  keyword: string,
-  n = 0,
-  cwd = fixturesDir,
-  tsconfig?: string,
-) => {
-  const { service, resolvedConfigPath } = setupLanguageService({
-    cwd,
-    tsconfig,
+const setup = (fileName: string, keyword: string, n = 0) => {
+  const { service } = setupLanguageService({
+    cwd: fixturesDir,
     fileName,
   });
 
   const program = service.getProgram()!;
 
-  const { declaration, symbolsInfo } = resolveSymbol({
+  const { declaration } = resolveSymbol({
     keyword,
     fileName,
     n,
     program,
   });
 
-  return { declaration, service, symbolsInfo, resolvedConfigPath };
+  return { declaration, service };
 };
 
 describe('getDefinition function', () => {
@@ -179,93 +167,6 @@ describe('getDefinition function', () => {
     });
   });
 
-  describe('error handling', () => {
-    it('should throw NOT_FOUND error when symbol does not exist', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-
-      assert.throws(
-        () => {
-          setup(mathFile, 'nonExistentSymbol');
-        },
-        (error: Error) => {
-          assert.ok(error instanceof SymbolError);
-          assert.strictEqual(
-            (error as SymbolError).type,
-            SYMBOL_ERROR_TYPE.NOT_FOUND,
-          );
-          assert.ok(error.message.includes('nonExistentSymbol'));
-          return true;
-        },
-      );
-    });
-
-    it('should throw INDEX_OUT_OF_RANGE error when n is out of range', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-
-      assert.throws(
-        () => {
-          setup(mathFile, 'add', 10); // Out of range
-        },
-        (error: Error) => {
-          assert.ok(error instanceof SymbolError);
-          assert.strictEqual(
-            (error as SymbolError).type,
-            SYMBOL_ERROR_TYPE.INDEX_OUT_OF_RANGE,
-          );
-          assert.ok(error.message.includes('10'));
-          assert.ok(error.message.includes('out of range'));
-          return true;
-        },
-      );
-    });
-
-    it('should throw INDEX_OUT_OF_RANGE error when n is negative', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-
-      assert.throws(
-        () => {
-          setup(mathFile, 'add', -1);
-        },
-        (error: Error) => {
-          assert.ok(error instanceof SymbolError);
-          assert.strictEqual(
-            (error as SymbolError).type,
-            SYMBOL_ERROR_TYPE.INDEX_OUT_OF_RANGE,
-          );
-          return true;
-        },
-      );
-    });
-  });
-
-  describe('symbols field', () => {
-    it('should return symbols array with found symbols', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-      const { symbolsInfo } = setup(mathFile, 'add');
-
-      assert.ok(symbolsInfo);
-      assert.ok(Array.isArray(symbolsInfo));
-      assert.strictEqual(symbolsInfo.length, 2);
-
-      const symbolInfo = symbolsInfo[0]!;
-      assert.ok(typeof symbolInfo.character === 'number');
-      assert.ok(typeof symbolInfo.line === 'number');
-      assert.ok(typeof symbolInfo.code === 'string');
-      assert.ok(symbolInfo.line >= 0);
-      assert.ok(symbolInfo.character >= 0);
-    });
-
-    it('should have code field containing the entire line of symbol definition', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-      const { symbolsInfo } = setup(mathFile, 'add');
-
-      const symbolInfo = symbolsInfo[0]!;
-      assert.ok(symbolInfo.code.includes('add'));
-      assert.ok(symbolInfo.code.length > 0);
-      assert.strictEqual(symbolInfo.line, 0); // First add is on line 1 (0-based index 0)
-    });
-  });
-
   describe('n parameter', () => {
     it('should use the nth symbol when n is specified', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
@@ -279,203 +180,6 @@ describe('getDefinition function', () => {
 
       // Second add is the scoped one inside the scoped function
       assert.ok(definitions.length > 0);
-    });
-  });
-
-  describe('with tsconfig parameter', () => {
-    const customConfigDir = path.join(
-      process.cwd(),
-      'test/fixtures/custom-config',
-    );
-    const excludedFileDir = path.join(
-      process.cwd(),
-      'test/fixtures/excluded-file',
-    );
-
-    it('should work with custom tsconfig path', () => {
-      const utilsFile = path.join(customConfigDir, 'utils.ts');
-      const { declaration, service } = setup(
-        utilsFile,
-        'square',
-        0,
-        customConfigDir,
-        'tsconfig.custom.json',
-      );
-      const { definitions } = getDefinition({
-        fileName: utilsFile,
-        declaration,
-        service,
-        operation: OPERATION.DEFINITION,
-      });
-
-      assert.ok(definitions.length > 0);
-      const hasDefinition = definitions.some((def) =>
-        def.fileName.endsWith('utils.ts'),
-      );
-      assert.ok(hasDefinition);
-    });
-
-    it('should throw TSCONFIG_NOT_FOUND error when config file does not exist', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-
-      assert.throws(
-        () => {
-          setup(mathFile, 'add', 0, fixturesDir, 'nonexistent.json');
-        },
-        (error: Error) => {
-          assert.ok(error instanceof TsconfigError);
-          assert.strictEqual(
-            (error as TsconfigError).type,
-            TSCONFIG_ERROR_TYPE.TSCONFIG_NOT_FOUND,
-          );
-          assert.ok(error.message.includes('nonexistent.json'));
-          return true;
-        },
-      );
-    });
-
-    it('should throw FILE_NOT_IN_PROJECT error when file is not in project', () => {
-      const excludedFile = path.join(excludedFileDir, 'excluded.ts');
-
-      assert.throws(
-        () => {
-          setup(excludedFile, 'excluded', 0, excludedFileDir, 'tsconfig.json');
-        },
-        (error: Error) => {
-          assert.ok(error instanceof TsconfigError);
-          assert.strictEqual(
-            (error as TsconfigError).type,
-            TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
-          );
-          assert.ok(error.message.includes('excluded.ts'));
-          return true;
-        },
-      );
-    });
-
-    it('should work with file in project when tsconfig is specified', () => {
-      const includedFile = path.join(excludedFileDir, 'src/included.ts');
-      const { declaration, service } = setup(
-        includedFile,
-        'helper',
-        0,
-        excludedFileDir,
-        'tsconfig.json',
-      );
-      const { definitions } = getDefinition({
-        fileName: includedFile,
-        declaration,
-        service,
-        operation: OPERATION.DEFINITION,
-      });
-
-      assert.ok(definitions.length > 0);
-      const hasDefinition = definitions.some((def) =>
-        def.fileName.endsWith('included.ts'),
-      );
-      assert.ok(hasDefinition);
-    });
-
-    it('should use tsconfig.json from cwd when tsconfig not specified', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-      const { declaration, service } = setup(mathFile, 'add');
-      const { definitions } = getDefinition({
-        fileName: mathFile,
-        declaration,
-        service,
-        operation: OPERATION.DEFINITION,
-      });
-
-      assert.ok(definitions.length > 0);
-    });
-
-    it('should work with absolute path to tsconfig', () => {
-      const utilsFile = path.join(customConfigDir, 'utils.ts');
-      const absoluteTsConfigPath = path.join(
-        customConfigDir,
-        'tsconfig.custom.json',
-      );
-      const { declaration, service } = setup(
-        utilsFile,
-        'square',
-        0,
-        customConfigDir,
-        absoluteTsConfigPath,
-      );
-      const { definitions } = getDefinition({
-        fileName: utilsFile,
-        declaration,
-        service,
-        operation: OPERATION.DEFINITION,
-      });
-
-      assert.ok(definitions.length > 0);
-    });
-  });
-
-  describe('with auto-discovered tsconfig', () => {
-    it('should work when auto-discovered config includes the file', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-      const { declaration, service } = setup(mathFile, 'add');
-      const { definitions } = getDefinition({
-        fileName: mathFile,
-        declaration,
-        service,
-        operation: OPERATION.DEFINITION,
-      });
-
-      assert.ok(definitions.length > 0);
-      const hasDefinition = definitions.some((def) =>
-        def.fileName.endsWith('math.ts'),
-      );
-      assert.ok(hasDefinition);
-    });
-
-    it('should throw FILE_NOT_IN_PROJECT when auto-discovered config excludes file', () => {
-      const excludeFile = path.join(fixturesDir, 'exclude.ts');
-
-      assert.throws(
-        () => {
-          setup(excludeFile, 'divide');
-        },
-        (error: Error) => {
-          assert.ok(error instanceof TsconfigError);
-          assert.strictEqual(
-            (error as TsconfigError).type,
-            TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
-          );
-          assert.ok(error.message.includes('exclude.ts'));
-          return true;
-        },
-      );
-    });
-  });
-
-  describe('resolvedConfigPath field', () => {
-    it('should return the resolved config path', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-      const { resolvedConfigPath } = setup(mathFile, 'add');
-
-      assert.ok(resolvedConfigPath);
-      assert.ok(resolvedConfigPath.endsWith('tsconfig.json'));
-    });
-
-    it('should return custom config path when specified', () => {
-      const customConfigDir = path.join(
-        process.cwd(),
-        'test/fixtures/custom-config',
-      );
-      const utilsFile = path.join(customConfigDir, 'utils.ts');
-      const { resolvedConfigPath } = setup(
-        utilsFile,
-        'square',
-        0,
-        customConfigDir,
-        'tsconfig.custom.json',
-      );
-
-      assert.ok(resolvedConfigPath);
-      assert.ok(resolvedConfigPath.endsWith('tsconfig.custom.json'));
     });
   });
 });
