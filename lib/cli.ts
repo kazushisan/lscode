@@ -30,6 +30,7 @@ import {
   formatFindReferences,
   formatGetDefinition,
   formatGetTsconfig,
+  formatSymbolsInfo,
 } from './util/format.js';
 import { applyEdits } from './util/edit.js';
 import ts from 'typescript';
@@ -116,20 +117,27 @@ const main = () => {
         service,
       });
 
-      formatGetTsconfig({
-        resolvedConfigPath,
-        cwd,
-        fileName,
-      }).forEach((line) => console.log(line));
-
-      const lines = formatFindReferences({
-        references,
-        symbols: symbolsInfo,
-        n,
-        cwd,
-        symbol,
-      });
-      lines.forEach((line) => console.log(line));
+      console.log(
+        [
+          ...formatGetTsconfig({
+            resolvedConfigPath,
+            cwd,
+            fileName,
+          }),
+          ...formatSymbolsInfo({
+            symbols: symbolsInfo,
+            cwd,
+            symbol,
+          }),
+          ...formatFindReferences({
+            references,
+            symbols: symbolsInfo,
+            n,
+            cwd,
+            symbol,
+          }),
+        ].join('\n'),
+      );
       break;
     }
     case COMMAND.GET_DEFINITION:
@@ -201,20 +209,26 @@ const main = () => {
         })(),
       });
 
-      formatGetTsconfig({
-        resolvedConfigPath,
-        cwd,
-        fileName,
-      }).forEach((line) => console.log(line));
-
-      const lines = formatGetDefinition({
-        definitions,
-        symbols: symbolsInfo,
-        n: symbolIndex,
-        cwd,
-        symbol,
-      });
-      lines.forEach((line) => console.log(line));
+      console.log(
+        [
+          ...formatGetTsconfig({
+            resolvedConfigPath,
+            cwd,
+            fileName,
+          }),
+          ...formatSymbolsInfo({
+            symbols: symbolsInfo,
+            cwd,
+            symbol,
+          }),
+          ...formatGetDefinition({
+            definitions,
+            symbols: symbolsInfo,
+            n: symbolIndex,
+            cwd,
+          }),
+        ].join('\n'),
+      );
       break;
     }
     case COMMAND.RENAME_SYMBOL: {

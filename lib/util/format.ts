@@ -15,6 +15,47 @@ interface SymbolInfo {
   code: string;
 }
 
+export const formatSymbolsInfo = ({
+  symbols,
+  cwd,
+  symbol,
+}: {
+  symbols: SymbolInfo[];
+  cwd: string;
+  symbol: string;
+}): string[] => {
+  if (symbols.length === 0) {
+    return [];
+  }
+
+  const output: string[] = [];
+  output.push('Found symbols:');
+  symbols.forEach((symbolInfo) => {
+    const relativePath = relative(cwd, symbolInfo.fileName);
+    const location = styleText(
+      'gray',
+      `${relativePath}:${symbolInfo.line + 1}:${symbolInfo.character + 1}:`,
+    );
+
+    const code = symbolInfo.code;
+    const trimmedCode = code.trim();
+    const leadingWhitespace = code.length - code.trimStart().length;
+    const start = symbolInfo.character - leadingWhitespace;
+    const end = start + symbol.length;
+
+    const beforeSymbol = trimmedCode.substring(0, start);
+    const symbolText = trimmedCode.substring(start, end);
+    const afterSymbol = trimmedCode.substring(end);
+
+    const highlightedSymbol = styleText('green', symbolText);
+
+    output.push(
+      `${location} ${beforeSymbol}${highlightedSymbol}${afterSymbol}`,
+    );
+  });
+  return output;
+};
+
 export const formatGetTsconfig = ({
   resolvedConfigPath,
   cwd,
@@ -49,34 +90,6 @@ export const formatFindReferences = ({
   symbol: string;
 }): string[] => {
   const output: string[] = [];
-
-  if (symbols.length > 0) {
-    output.push('Found symbols:');
-    symbols.forEach((symbolInfo) => {
-      const relativePath = relative(cwd, symbolInfo.fileName);
-      const location = styleText(
-        'gray',
-        `${relativePath}:${symbolInfo.line + 1}:${symbolInfo.character + 1}:`,
-      );
-
-      const code = symbolInfo.code;
-      const trimmedCode = code.trim();
-      const leadingWhitespace = code.length - code.trimStart().length;
-      const start = symbolInfo.character - leadingWhitespace;
-      const end = start + symbol.length;
-
-      const beforeSymbol = trimmedCode.substring(0, start);
-      const symbolText = trimmedCode.substring(start, end);
-      const afterSymbol = trimmedCode.substring(end);
-
-      const highlightedSymbol = styleText('green', symbolText);
-
-      output.push(
-        `${location} ${beforeSymbol}${highlightedSymbol}${afterSymbol}`,
-      );
-    });
-    output.push('');
-  }
 
   if (symbols.length > 0) {
     const symbolInfo = symbols[n];
@@ -139,43 +152,13 @@ export const formatGetDefinition = ({
   symbols,
   n,
   cwd,
-  symbol,
 }: {
   definitions: DefinitionLocation[];
   symbols: SymbolInfo[];
   n: number;
   cwd: string;
-  symbol: string;
 }): string[] => {
   const output: string[] = [];
-
-  if (symbols.length > 0) {
-    output.push('Found symbols:');
-    symbols.forEach((symbolInfo) => {
-      const relativePath = relative(cwd, symbolInfo.fileName);
-      const location = styleText(
-        'gray',
-        `${relativePath}:${symbolInfo.line + 1}:${symbolInfo.character + 1}:`,
-      );
-
-      const code = symbolInfo.code;
-      const trimmedCode = code.trim();
-      const leadingWhitespace = code.length - code.trimStart().length;
-      const start = symbolInfo.character - leadingWhitespace;
-      const end = start + symbol.length;
-
-      const beforeSymbol = trimmedCode.substring(0, start);
-      const symbolText = trimmedCode.substring(start, end);
-      const afterSymbol = trimmedCode.substring(end);
-
-      const highlightedSymbol = styleText('green', symbolText);
-
-      output.push(
-        `${location} ${beforeSymbol}${highlightedSymbol}${afterSymbol}`,
-      );
-    });
-    output.push('');
-  }
 
   if (symbols.length > 0) {
     const symbolInfo = symbols[n];

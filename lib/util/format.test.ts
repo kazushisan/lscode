@@ -4,6 +4,7 @@ import {
   formatFindReferences,
   formatGetDefinition,
   formatGetTsconfig,
+  formatSymbolsInfo,
 } from './format.js';
 import { findReferences } from './findReferences.js';
 import { setupLanguageService } from './languageService.js';
@@ -77,6 +78,55 @@ describe('formatGetTsconfig function', () => {
   });
 });
 
+describe('formatSymbolsInfo function', () => {
+  it('should format symbols info for add function', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const { symbolsInfo } = setup(mathFile, 'add');
+
+    const formatted = formatSymbolsInfo({
+      symbols: symbolsInfo,
+      cwd: fixturesDir,
+      symbol: 'add',
+    });
+
+    const expected = [
+      'Found symbols:',
+      `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
+      `${styleText('gray', 'math.ts:12:9:')} const ${styleText('green', 'add')} = () => {};`,
+    ].join('\n');
+
+    assert.strictEqual(formatted.join('\n'), expected);
+  });
+
+  it('should format symbols info for PI constant', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const { symbolsInfo } = setup(mathFile, 'PI');
+
+    const formatted = formatSymbolsInfo({
+      symbols: symbolsInfo,
+      cwd: fixturesDir,
+      symbol: 'PI',
+    });
+
+    const expected = [
+      'Found symbols:',
+      `${styleText('gray', 'math.ts:9:14:')} export const ${styleText('green', 'PI')} = 3.14159;`,
+    ].join('\n');
+
+    assert.strictEqual(formatted.join('\n'), expected);
+  });
+
+  it('should return empty array when no symbols', () => {
+    const formatted = formatSymbolsInfo({
+      symbols: [],
+      cwd: fixturesDir,
+      symbol: 'notfound',
+    });
+
+    assert.strictEqual(formatted.length, 0);
+  });
+});
+
 describe('formatFindReferences function', () => {
   it('should format references for add function', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
@@ -95,10 +145,6 @@ describe('formatFindReferences function', () => {
     });
 
     const expected = [
-      'Found symbols:',
-      `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
-      `${styleText('gray', 'math.ts:12:9:')} const ${styleText('green', 'add')} = () => {};`,
-      '',
       'References shown for symbol #0 at math.ts:1:14',
       `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
       `${styleText('gray', 'main.ts:1:10:')} import { ${styleText('green', 'add')}, multiply, PI } from './math.js';`,
@@ -128,10 +174,6 @@ describe('formatFindReferences function', () => {
     });
 
     const expected = [
-      'Found symbols:',
-      `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
-      `${styleText('gray', 'math.ts:12:9:')} const ${styleText('green', 'add')} = () => {};`,
-      '',
       'References shown for symbol #1 at math.ts:12:9',
       `${styleText('gray', 'math.ts:12:9:')}   const ${styleText('green', 'add')} = () => {};`,
       `${styleText('gray', 'math.ts:14:10:')}   return ${styleText('green', 'add')};`,
@@ -157,9 +199,6 @@ describe('formatFindReferences function', () => {
     });
 
     const expected = [
-      'Found symbols:',
-      `${styleText('gray', 'math.ts:9:14:')} export const ${styleText('green', 'PI')} = 3.14159;`,
-      '',
       'References shown for symbol #0 at math.ts:9:14',
       `${styleText('gray', 'math.ts:9:14:')} export const ${styleText('green', 'PI')} = 3.14159;`,
       `${styleText('gray', 'main.ts:1:25:')} import { add, multiply, ${styleText('green', 'PI')} } from './math.js';`,
@@ -187,7 +226,6 @@ describe('formatFindReferences function', () => {
     });
 
     const output = formatted.join('\n');
-    assert.ok(output.includes('Found symbols:'));
     assert.ok(output.includes('References shown for symbol #0'));
     assert.ok(output.includes('math.ts'));
     assert.ok(output.includes('main.ts'));
@@ -213,14 +251,9 @@ describe('formatGetDefinition function', () => {
       symbols: symbolsInfo,
       n: 0,
       cwd: fixturesDir,
-      symbol: 'add',
     });
 
     const expected = [
-      'Found symbols:',
-      `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
-      `${styleText('gray', 'math.ts:12:9:')} const ${styleText('green', 'add')} = () => {};`,
-      '',
       'Definition shown for symbol #0 at math.ts:1:14',
       styleText('gray', 'math.ts:1:14:'),
       'export const add = (a: number, b: number): number => {\n  return a + b;\n};',
@@ -248,14 +281,9 @@ describe('formatGetDefinition function', () => {
       symbols: symbolsInfo,
       n: 1,
       cwd: fixturesDir,
-      symbol: 'add',
     });
 
     const expected = [
-      'Found symbols:',
-      `${styleText('gray', 'math.ts:1:14:')} export const ${styleText('green', 'add')} = (a: number, b: number): number => {`,
-      `${styleText('gray', 'math.ts:12:9:')} const ${styleText('green', 'add')} = () => {};`,
-      '',
       'Definition shown for symbol #1 at math.ts:12:9',
       styleText('gray', 'math.ts:12:9:'),
       'const add = () => {};',
@@ -282,13 +310,9 @@ describe('formatGetDefinition function', () => {
       symbols: symbolsInfo,
       n: 0,
       cwd: fixturesDir,
-      symbol: 'PI',
     });
 
     const expected = [
-      'Found symbols:',
-      `${styleText('gray', 'math.ts:9:14:')} export const ${styleText('green', 'PI')} = 3.14159;`,
-      '',
       'Definition shown for symbol #0 at math.ts:9:14',
       styleText('gray', 'math.ts:9:14:'),
       'export const PI = 3.14159;',
@@ -315,11 +339,9 @@ describe('formatGetDefinition function', () => {
       symbols: symbolsInfo,
       n: 0,
       cwd: fixturesDir,
-      symbol: 'multiply',
     });
 
     const output = formatted.join('\n');
-    assert.ok(output.includes('Found symbols:'));
     assert.ok(output.includes('Definition shown for symbol #0'));
     assert.ok(output.includes('math.ts'));
     assert.ok(output.includes('multiply'));
