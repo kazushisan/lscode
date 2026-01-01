@@ -1,6 +1,5 @@
 import ts from 'typescript';
 import { applyTextChanges, TextChange } from './edit.js';
-import { CommandError, COMMAND_ERROR_TYPE } from './error.js';
 
 export const renameFile = ({
   fileName,
@@ -12,11 +11,9 @@ export const renameFile = ({
   service: ts.LanguageService;
 }) => {
   const content = ts.sys.readFile(fileName);
-  if (content === undefined) {
-    throw new CommandError(
-      `Failed to read file: ${fileName}`,
-      COMMAND_ERROR_TYPE.RENAME_FILE_NOT_FOUND,
-    );
+
+  if (typeof content !== 'string') {
+    throw new Error(`Unexpected: failed to read file ${fileName}`);
   }
 
   const program = service.getProgram();

@@ -9,7 +9,7 @@ import { resolveSymbol } from './util/symbol.js';
 import { getDefinition, OPERATION } from './util/getDefinition.js';
 import { renameSymbol } from './util/renameSymbol.js';
 import { renameFile } from './util/renameFile.js';
-import { ArgsError, CommandError } from './util/error.js';
+import { ArgsError, CommandError, COMMAND_ERROR_TYPE } from './util/error.js';
 import {
   parseMainArgs,
   parseFindReferencesArgs,
@@ -41,6 +41,16 @@ const packageJson = JSON.parse(
 );
 
 const version = packageJson.version;
+
+const checkFileExists = (fileName: string) => {
+  const content = ts.sys.readFile(fileName);
+  if (content === undefined) {
+    throw new CommandError(
+      `Failed to read file: ${fileName}`,
+      COMMAND_ERROR_TYPE.FILE_NOT_FOUND,
+    );
+  }
+};
 
 const main = () => {
   const argv = process.argv.slice(2);
@@ -80,10 +90,7 @@ const main = () => {
       const cwd = process.cwd();
       const fileName = resolve(cwd, filePath);
 
-      const content = ts.sys.readFile(fileName);
-      if (content === undefined) {
-        throw new Error(`Failed to read file: ${fileName}`);
-      }
+      checkFileExists(fileName);
 
       const { service, resolvedConfigPath } = setupLanguageService({
         cwd,
@@ -155,10 +162,7 @@ const main = () => {
 
       const symbolIndex = n !== undefined ? n : 0;
 
-      const content = ts.sys.readFile(fileName);
-      if (content === undefined) {
-        throw new Error(`Failed to read file: ${fileName}`);
-      }
+      checkFileExists(fileName);
 
       const { service, resolvedConfigPath } = setupLanguageService({
         cwd,
@@ -228,10 +232,7 @@ const main = () => {
 
       const symbolIndex = n !== undefined ? n : 0;
 
-      const content = ts.sys.readFile(fileName);
-      if (content === undefined) {
-        throw new Error(`Failed to read file: ${fileName}`);
-      }
+      checkFileExists(fileName);
 
       const { service, resolvedConfigPath } = setupLanguageService({
         cwd,
@@ -280,6 +281,8 @@ const main = () => {
       const cwd = process.cwd();
       const fileName = resolve(cwd, filePath);
       const newFileName = resolve(cwd, newFilePath);
+
+      checkFileExists(fileName);
 
       const { service, resolvedConfigPath } = setupLanguageService({
         cwd,

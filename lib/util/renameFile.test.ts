@@ -1,7 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { renameFile } from './renameFile.js';
-import { CommandError, COMMAND_ERROR_TYPE } from './error.js';
 import { setupLanguageService } from './languageService.js';
 import path from 'node:path';
 
@@ -180,39 +179,6 @@ export const scoped = () => {
   return add;
 };
 `,
-      );
-    });
-  });
-
-  describe('error handling', () => {
-    it('should throw RENAME_FILE_NOT_FOUND error when file does not exist', () => {
-      const nonExistentFile = path.join(fixturesDir, 'nonexistent.ts');
-      const newFile = path.join(fixturesDir, 'new.ts');
-
-      // Use a valid file for setup to get service, then try to rename non-existent file
-      const mathFile = path.join(fixturesDir, 'math.ts');
-      const { service } = setupLanguageService({
-        cwd: fixturesDir,
-        fileName: mathFile,
-      });
-
-      assert.throws(
-        () => {
-          renameFile({
-            fileName: nonExistentFile,
-            newFileName: newFile,
-            service,
-          });
-        },
-        (error: Error) => {
-          assert.ok(error instanceof CommandError);
-          assert.strictEqual(
-            (error as CommandError).type,
-            COMMAND_ERROR_TYPE.RENAME_FILE_NOT_FOUND,
-          );
-          assert.ok(error.message.includes('Failed to read file'));
-          return true;
-        },
       );
     });
   });
