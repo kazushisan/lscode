@@ -1,21 +1,10 @@
 import ts from 'typescript';
-import { createLanguageServiceHost } from './languageService.js';
-import { findSymbol } from './symbol.js';
-import { getLineAtPosition } from './position.js';
-import { getTsconfig } from './tsconfig.js';
 
 interface DefinitionLocation {
   fileName: string;
   line: number; // 0-based
   character: number; // 0-based
   code: string; // entire code of the definition
-}
-
-interface SymbolInfo {
-  fileName: string;
-  character: number; // 0-based
-  line: number; // 0-based
-  code: string; // entire line of the symbol's definition
 }
 
 // tsr-skip used in test
@@ -25,24 +14,6 @@ export const OPERATION = {
 } as const;
 
 type Operation = (typeof OPERATION)[keyof typeof OPERATION];
-
-// tsr-skip used in test
-export const ERROR_TYPE = {
-  SYMBOL_NOT_FOUND: 'SYMBOL_NOT_FOUND',
-  SYMBOL_INDEX_OUT_OF_RANGE: 'SYMBOL_INDEX_OUT_OF_RANGE',
-} as const;
-
-type GetDefinitionErrorType = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
-
-export class GetDefinitionError extends Error {
-  type: GetDefinitionErrorType;
-
-  constructor(message: string, type: GetDefinitionErrorType) {
-    super(message);
-    this.name = 'GetDefinitionError';
-    this.type = type;
-  }
-}
 
 const findNodeAtPosition = (
   node: ts.Node,
@@ -89,68 +60,17 @@ const findDeclarationNode = (
 };
 
 export const getDefinition = ({
-  symbol,
   fileName,
-  cwd,
-  tsconfig,
-  n,
+  declaration,
+  service,
   operation,
 }: {
-  symbol: string;
   fileName: string;
-  cwd: string;
-  tsconfig?: string;
-  n: number;
+  declaration: ts.Declaration;
+  service: ts.LanguageService;
   operation: Operation;
 }) => {
-  const content = ts.sys.readFile(fileName);
-  if (content === undefined) {
-    throw new Error(`Failed to read file: ${fileName}`);
-  }
-
-  const { options, fileNames, resolvedConfigPath } = getTsconfig({
-    cwd,
-    tsconfig,
-    fileName,
-  });
-
-  const host = createLanguageServiceHost(fileNames, options, cwd);
-
-  const service = ts.createLanguageService(host);
-  const program = service.getProgram();
-
-  if (!program) {
-    throw new Error('Failed to create program');
-  }
-
-  const symbols = findSymbol(program, fileName, symbol);
-
-  if (symbols.length === 0) {
-    throw new GetDefinitionError(
-      `Symbol '${symbol}' not found in ${fileName}`,
-      ERROR_TYPE.SYMBOL_NOT_FOUND,
-    );
-  }
-
-  if (n < 0 || n >= symbols.length) {
-    throw new GetDefinitionError(
-      `Symbol index ${n} out of range. Found ${symbols.length} symbol(s) with name '${symbol}'`,
-      ERROR_TYPE.SYMBOL_INDEX_OUT_OF_RANGE,
-    );
-  }
-
-  const targetSymbol = symbols[n]!;
-  const declarations = targetSymbol.getDeclarations();
-
-  if (!declarations || declarations.length === 0) {
-    throw new GetDefinitionError(
-      `Symbol '${symbol}' not found in ${fileName}`,
-      ERROR_TYPE.SYMBOL_NOT_FOUND,
-    );
-  }
-
-  const firstDeclaration = declarations[0]!;
-  const position = firstDeclaration.getStart();
+  const position = declaration.getStart();
 
   const definitionsInfo = (() => {
     switch (operation) {
@@ -198,38 +118,7 @@ export const getDefinition = ({
     }
   }
 
-  // Build symbols array from found symbols
-  const symbolsInfo: SymbolInfo[] = [];
-
-  for (const foundSymbol of symbols) {
-    const symbolDeclarations = foundSymbol.getDeclarations();
-    if (!symbolDeclarations || symbolDeclarations.length === 0) {
-      continue;
-    }
-
-    const declaration = symbolDeclarations[0]!;
-    const declarationSourceFile = declaration.getSourceFile();
-    const declarationPosition = declaration.getStart();
-    const { line, character } =
-      declarationSourceFile.getLineAndCharacterOfPosition(declarationPosition);
-
-    // Get the entire line text for context
-    const code = getLineAtPosition(
-      declarationSourceFile.text,
-      declarationPosition,
-    );
-
-    symbolsInfo.push({
-      fileName: declarationSourceFile.fileName,
-      character,
-      line,
-      code,
-    });
-  }
-
   return {
     definitions,
-    symbols: symbolsInfo,
-    resolvedConfigPath,
   };
 };

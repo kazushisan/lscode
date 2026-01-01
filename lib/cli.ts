@@ -6,11 +6,7 @@ import { dirname, join } from 'node:path';
 import { findReferences } from './util/findReferences.js';
 import { setupLanguageService } from './util/languageService.js';
 import { resolveSymbol, SymbolError } from './util/symbol.js';
-import {
-  getDefinition,
-  GetDefinitionError,
-  OPERATION,
-} from './util/getDefinition.js';
+import { getDefinition, OPERATION } from './util/getDefinition.js';
 import { renameSymbol, RenameSymbolError } from './util/renameSymbol.js';
 import { renameFile, RenameFileError } from './util/renameFile.js';
 import {
@@ -159,12 +155,33 @@ const main = () => {
 
       const symbolIndex = n !== undefined ? n : 0;
 
-      const result = getDefinition({
-        symbol,
-        fileName,
+      const content = ts.sys.readFile(fileName);
+      if (content === undefined) {
+        throw new Error(`Failed to read file: ${fileName}`);
+      }
+
+      const { service, resolvedConfigPath } = setupLanguageService({
         cwd,
         tsconfig,
+        fileName,
+      });
+
+      const program = service.getProgram();
+      if (!program) {
+        throw new Error('Failed to get program from language service');
+      }
+
+      const { declaration, symbolsInfo } = resolveSymbol({
+        keyword: symbol,
+        fileName,
         n: symbolIndex,
+        program,
+      });
+
+      const { definitions } = getDefinition({
+        fileName,
+        declaration,
+        service,
         operation: (() => {
           switch (command) {
             case 'get-definition': {
@@ -181,14 +198,14 @@ const main = () => {
       });
 
       formatGetTsconfig({
-        resolvedConfigPath: result.resolvedConfigPath,
+        resolvedConfigPath,
         cwd,
         fileName,
       }).forEach((line) => console.log(line));
 
       const lines = formatGetDefinition({
-        definitions: result.definitions,
-        symbols: result.symbols,
+        definitions,
+        symbols: symbolsInfo,
         n: symbolIndex,
         cwd,
         symbol,
@@ -301,7 +318,6 @@ try {
 
   if (
     error instanceof SymbolError ||
-    error instanceof GetDefinitionError ||
     error instanceof RenameSymbolError ||
     error instanceof RenameFileError ||
     error instanceof TsconfigError

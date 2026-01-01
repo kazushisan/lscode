@@ -197,17 +197,20 @@ describe('formatFindReferences function', () => {
 describe('formatGetDefinition function', () => {
   it('should format definition for add function', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const result = getDefinition({
-      symbol: 'add',
-      fileName: mathFile,
-      cwd: fixturesDir,
-      n: 0,
+    const { declaration, service, fileName, symbolsInfo } = setup(
+      mathFile,
+      'add',
+    );
+    const { definitions } = getDefinition({
+      fileName,
+      declaration,
+      service,
       operation: OPERATION.DEFINITION,
     });
 
     const formatted = formatGetDefinition({
-      definitions: result.definitions,
-      symbols: result.symbols,
+      definitions,
+      symbols: symbolsInfo,
       n: 0,
       cwd: fixturesDir,
       symbol: 'add',
@@ -228,17 +231,21 @@ describe('formatGetDefinition function', () => {
 
   it('should format definition for add function with n=1', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const result = getDefinition({
-      symbol: 'add',
-      fileName: mathFile,
-      cwd: fixturesDir,
-      n: 1,
+    const { declaration, service, fileName, symbolsInfo } = setup(
+      mathFile,
+      'add',
+      1,
+    );
+    const { definitions } = getDefinition({
+      fileName,
+      declaration,
+      service,
       operation: OPERATION.DEFINITION,
     });
 
     const formatted = formatGetDefinition({
-      definitions: result.definitions,
-      symbols: result.symbols,
+      definitions,
+      symbols: symbolsInfo,
       n: 1,
       cwd: fixturesDir,
       symbol: 'add',
@@ -259,17 +266,20 @@ describe('formatGetDefinition function', () => {
 
   it('should format definition for PI constant', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const result = getDefinition({
-      symbol: 'PI',
-      fileName: mathFile,
-      cwd: fixturesDir,
-      n: 0,
+    const { declaration, service, fileName, symbolsInfo } = setup(
+      mathFile,
+      'PI',
+    );
+    const { definitions } = getDefinition({
+      fileName,
+      declaration,
+      service,
       operation: OPERATION.DEFINITION,
     });
 
     const formatted = formatGetDefinition({
-      definitions: result.definitions,
-      symbols: result.symbols,
+      definitions,
+      symbols: symbolsInfo,
       n: 0,
       cwd: fixturesDir,
       symbol: 'PI',
@@ -289,17 +299,20 @@ describe('formatGetDefinition function', () => {
 
   it('should format definition for multiply function', () => {
     const mathFile = path.join(fixturesDir, 'math.ts');
-    const result = getDefinition({
-      symbol: 'multiply',
-      fileName: mathFile,
-      cwd: fixturesDir,
-      n: 0,
+    const { declaration, service, fileName, symbolsInfo } = setup(
+      mathFile,
+      'multiply',
+    );
+    const { definitions } = getDefinition({
+      fileName,
+      declaration,
+      service,
       operation: OPERATION.DEFINITION,
     });
 
     const formatted = formatGetDefinition({
-      definitions: result.definitions,
-      symbols: result.symbols,
+      definitions,
+      symbols: symbolsInfo,
       n: 0,
       cwd: fixturesDir,
       symbol: 'multiply',
