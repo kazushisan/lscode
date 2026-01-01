@@ -8,7 +8,7 @@ import { setupLanguageService } from './util/languageService.js';
 import { resolveSymbol, SymbolError } from './util/symbol.js';
 import { getDefinition, OPERATION } from './util/getDefinition.js';
 import { renameSymbol } from './util/renameSymbol.js';
-import { renameFile, RenameFileError } from './util/renameFile.js';
+import { renameFile } from './util/renameFile.js';
 import {
   parseMainArgs,
   parseFindReferencesArgs,
@@ -281,11 +281,16 @@ const main = () => {
       const fileName = resolve(cwd, filePath);
       const newFileName = resolve(cwd, newFilePath);
 
-      const { edits, resolvedConfigPath } = renameFile({
-        fileName,
+      const { service, resolvedConfigPath } = setupLanguageService({
         cwd,
         tsconfig,
+        fileName,
+      });
+
+      const { edits } = renameFile({
+        fileName,
         newFileName,
+        service,
       });
 
       formatGetTsconfig({
@@ -337,11 +342,7 @@ try {
     process.exit(1);
   }
 
-  if (
-    error instanceof SymbolError ||
-    error instanceof RenameFileError ||
-    error instanceof TsconfigError
-  ) {
+  if (error instanceof SymbolError || error instanceof TsconfigError) {
     console.error(`Error: ${error.message}`);
     process.exit(1);
   }
