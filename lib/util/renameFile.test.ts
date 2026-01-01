@@ -1,10 +1,19 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { renameFile, RenameFileError, ERROR_TYPE } from './renameFile.js';
-import { TsconfigError, TSCONFIG_ERROR_TYPE } from './tsconfig.js';
+import { setupLanguageService } from './languageService.js';
 import path from 'node:path';
 
 const fixturesDir = path.join(process.cwd(), 'test/fixtures/basic');
+
+const setup = (fileName: string) => {
+  const { service } = setupLanguageService({
+    cwd: fixturesDir,
+    fileName,
+  });
+
+  return { service };
+};
 
 describe('renameFile function', () => {
   describe('basic file rename', () => {
@@ -13,10 +22,11 @@ describe('renameFile function', () => {
       const mainFile = path.join(fixturesDir, 'main.ts');
       const newMathFile = path.join(fixturesDir, 'mathematics.ts');
 
+      const { service } = setup(mathFile);
       const { edits } = renameFile({
         fileName: mathFile,
-        cwd: fixturesDir,
         newFileName: newMathFile,
+        service,
       });
 
       // main.ts imports from math.ts, so it should be updated
@@ -74,10 +84,11 @@ export const scoped = () => {
       const mainFile = path.join(fixturesDir, 'main.ts');
       const newMainFile = path.join(fixturesDir, 'app.ts');
 
+      const { service } = setup(mainFile);
       const { edits } = renameFile({
         fileName: mainFile,
-        cwd: fixturesDir,
         newFileName: newMainFile,
+        service,
       });
 
       // main.ts is not imported by any other file, but should still have rename entries
@@ -115,10 +126,11 @@ calculate();
       const mainFile = path.join(fixturesDir, 'main.ts');
       const newMathFile = path.join(fixturesDir, 'utils/math.ts');
 
+      const { service } = setup(mathFile);
       const { edits } = renameFile({
         fileName: mathFile,
-        cwd: fixturesDir,
         newFileName: newMathFile,
+        service,
       });
 
       // main.ts imports from math.ts, so it should be updated
@@ -176,12 +188,16 @@ export const scoped = () => {
       const nonExistentFile = path.join(fixturesDir, 'nonexistent.ts');
       const newFile = path.join(fixturesDir, 'new.ts');
 
+      // Use a valid file for setup to get service, then try to rename non-existent file
+      const mathFile = path.join(fixturesDir, 'math.ts');
+      const { service } = setup(mathFile);
+
       assert.throws(
         () => {
           renameFile({
             fileName: nonExistentFile,
-            cwd: fixturesDir,
             newFileName: newFile,
+            service,
           });
         },
         (error: Error) => {
@@ -197,142 +213,16 @@ export const scoped = () => {
     });
   });
 
-  describe('with tsconfig parameter', () => {
-    const customConfigDir = path.join(
-      process.cwd(),
-      'test/fixtures/custom-config',
-    );
-    const excludedFileDir = path.join(
-      process.cwd(),
-      'test/fixtures/excluded-file',
-    );
-
-    it('should work with custom tsconfig path', () => {
-      const utilsFile = path.join(customConfigDir, 'utils.ts');
-      const mainFile = path.join(customConfigDir, 'main.ts');
-      const newUtilsFile = path.join(customConfigDir, 'helpers.ts');
-
-      const { edits } = renameFile({
-        fileName: utilsFile,
-        cwd: customConfigDir,
-        tsconfig: 'tsconfig.custom.json',
-        newFileName: newUtilsFile,
-      });
-
-      // main.ts imports from utils.ts, so it should be updated
-      assert.strictEqual(Object.keys(edits).length, 3);
-
-      assert.strictEqual(
-        edits[mainFile],
-        `import { square, cube } from './helpers.js';
-
-const result1 = square(5);
-const result2 = cube(3);
-
-console.log(result1, result2);
-`,
-      );
-
-      assert.strictEqual(edits[utilsFile], null);
-
-      assert.strictEqual(
-        edits[newUtilsFile],
-        `export const square = (x: number): number => {
-  return x * x;
-};
-
-export const cube = (x: number): number => {
-  return x * x * x;
-};
-`,
-      );
-    });
-
-    it('should throw TSCONFIG_NOT_FOUND error when config file does not exist', () => {
-      const mathFile = path.join(fixturesDir, 'math.ts');
-      const newFile = path.join(fixturesDir, 'new.ts');
-
-      assert.throws(
-        () => {
-          renameFile({
-            fileName: mathFile,
-            cwd: fixturesDir,
-            tsconfig: 'nonexistent.json',
-            newFileName: newFile,
-          });
-        },
-        (error: Error) => {
-          assert.ok(error instanceof TsconfigError);
-          assert.strictEqual(
-            (error as TsconfigError).type,
-            TSCONFIG_ERROR_TYPE.TSCONFIG_NOT_FOUND,
-          );
-          assert.ok(error.message.includes('nonexistent.json'));
-          return true;
-        },
-      );
-    });
-
-    it('should throw FILE_NOT_IN_PROJECT error when file is not in project', () => {
-      const excludedFile = path.join(excludedFileDir, 'excluded.ts');
-      const newFile = path.join(excludedFileDir, 'new.ts');
-
-      assert.throws(
-        () => {
-          renameFile({
-            fileName: excludedFile,
-            cwd: excludedFileDir,
-            tsconfig: 'tsconfig.json',
-            newFileName: newFile,
-          });
-        },
-        (error: Error) => {
-          assert.ok(error instanceof TsconfigError);
-          assert.strictEqual(
-            (error as TsconfigError).type,
-            TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
-          );
-          assert.ok(error.message.includes('excluded.ts'));
-          return true;
-        },
-      );
-    });
-
-    it('should work with file in project when tsconfig is specified', () => {
-      const includedFile = path.join(excludedFileDir, 'src/included.ts');
-      const newFile = path.join(excludedFileDir, 'src/helper.ts');
-
-      const { edits } = renameFile({
-        fileName: includedFile,
-        cwd: excludedFileDir,
-        tsconfig: 'tsconfig.json',
-        newFileName: newFile,
-      });
-
-      // included.ts is not imported by any other file, but should have rename entries
-      assert.strictEqual(Object.keys(edits).length, 2);
-
-      assert.strictEqual(edits[includedFile], null);
-
-      assert.strictEqual(
-        edits[newFile],
-        `export const helper = (x: number): number => {
-  return x * 2;
-};
-`,
-      );
-    });
-  });
-
   describe('result structure', () => {
     it('should return object with file names as keys', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
       const newMathFile = path.join(fixturesDir, 'arithmetic.ts');
 
+      const { service } = setup(mathFile);
       const { edits } = renameFile({
         fileName: mathFile,
-        cwd: fixturesDir,
         newFileName: newMathFile,
+        service,
       });
 
       // Result should be an object
@@ -351,10 +241,11 @@ export const cube = (x: number): number => {
     it('should handle renaming to the same name gracefully', () => {
       const mathFile = path.join(fixturesDir, 'math.ts');
 
+      const { service } = setup(mathFile);
       const { edits } = renameFile({
         fileName: mathFile,
-        cwd: fixturesDir,
         newFileName: mathFile,
+        service,
       });
 
       // When renaming to the same name, no changes should be made
@@ -366,10 +257,11 @@ export const cube = (x: number): number => {
       const mainFile = path.join(fixturesDir, 'main.ts');
       const newMathFile = path.join(fixturesDir, 'mathutils.ts');
 
+      const { service } = setup(mathFile);
       const { edits } = renameFile({
-        fileName: 'math.ts',
-        cwd: fixturesDir,
-        newFileName: 'mathutils.ts',
+        fileName: mathFile,
+        newFileName: newMathFile,
+        service,
       });
 
       assert.strictEqual(Object.keys(edits).length, 3);

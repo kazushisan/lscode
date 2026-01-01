@@ -1,17 +1,14 @@
 import ts from 'typescript';
-import { createLanguageServiceHost } from './languageService.js';
-import { getTsconfig } from './tsconfig.js';
-import path from 'node:path';
 import { applyTextChanges, TextChange } from './edit.js';
 
 // tsr-skip used in test
 export const ERROR_TYPE = {
   FILE_NOT_FOUND: 'FILE_NOT_FOUND',
-  FILE_NOT_IN_PROJECT: 'FILE_NOT_IN_PROJECT',
 } as const;
 
 type RenameFileErrorType = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
 
+// tsr-skip used in test
 export class RenameFileError extends Error {
   type: RenameFileErrorType;
 
@@ -24,51 +21,28 @@ export class RenameFileError extends Error {
 
 export const renameFile = ({
   fileName,
-  cwd,
-  tsconfig,
   newFileName,
+  service,
 }: {
   fileName: string;
-  cwd: string;
-  tsconfig?: string;
   newFileName: string;
+  service: ts.LanguageService;
 }) => {
-  const absoluteFileName = path.isAbsolute(fileName)
-    ? fileName
-    : path.resolve(cwd, fileName);
-  const absoluteNewFileName = path.isAbsolute(newFileName)
-    ? newFileName
-    : path.resolve(cwd, newFileName);
-
-  const content = ts.sys.readFile(absoluteFileName);
+  const content = ts.sys.readFile(fileName);
   if (content === undefined) {
     throw new RenameFileError(
-      `Failed to read file: ${absoluteFileName}`,
+      `Failed to read file: ${fileName}`,
       ERROR_TYPE.FILE_NOT_FOUND,
     );
   }
 
-  const { options, fileNames, resolvedConfigPath } = getTsconfig({
-    cwd,
-    tsconfig,
-    fileName: absoluteFileName,
-  });
-
-  const host = createLanguageServiceHost(fileNames, options, cwd);
-
-  const service = ts.createLanguageService(host);
   const program = service.getProgram();
 
   if (!program) {
-    throw new Error('Failed to create program');
+    throw new Error('Failed to get program from language service');
   }
 
-  const edits = service.getEditsForFileRename(
-    absoluteFileName,
-    absoluteNewFileName,
-    {},
-    {},
-  );
+  const edits = service.getEditsForFileRename(fileName, newFileName, {}, {});
 
   const changesByFile = edits.reduce(
     (acc, edit) => {
@@ -91,7 +65,7 @@ export const renameFile = ({
   for (const [file, changes] of Object.entries(changesByFile)) {
     const sourceFile = program.getSourceFile(file);
     if (!sourceFile) {
-      const fileContent = host.readFile?.(file);
+      const fileContent = ts.sys.readFile(file);
       if (!fileContent) {
         continue;
       }
@@ -109,10 +83,10 @@ export const renameFile = ({
     }
   }
 
-  if (absoluteFileName !== absoluteNewFileName) {
-    result[absoluteFileName] = null;
-    result[absoluteNewFileName] = content;
+  if (fileName !== newFileName) {
+    result[fileName] = null;
+    result[newFileName] = content;
   }
 
-  return { edits: result, resolvedConfigPath };
+  return { edits: result };
 };

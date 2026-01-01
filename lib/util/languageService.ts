@@ -1,7 +1,7 @@
 import ts from 'typescript';
 import { getTsconfig } from './tsconfig.js';
 
-export const createLanguageServiceHost = (
+const createLanguageServiceHost = (
   rootFiles: string[],
   compilerOptions: ts.CompilerOptions,
   cwd: string,
