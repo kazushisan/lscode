@@ -1,15 +1,8 @@
 import { parseArgs } from 'node:util';
 import { ArgsError } from './error.js';
+import { Command, COMMAND } from './command.js';
 
-const KNOWN_COMMANDS = [
-  'find-references',
-  'get-definition',
-  'get-type-definition',
-  'rename-symbol',
-  'rename-file',
-] as const;
-
-type Command = (typeof KNOWN_COMMANDS)[number];
+const KNOWN_COMMANDS = Object.values(COMMAND);
 
 type MainArgs =
   | {
@@ -144,7 +137,7 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
   if (positionals.length === 0) {
     throw new ArgsError(
       'Missing required argument <file#symbol>',
-      'find-references',
+      COMMAND.FIND_REFERENCES,
     );
   }
 
@@ -154,7 +147,7 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
   if (hashIndex === -1) {
     throw new ArgsError(
       'Invalid argument format. Expected: path/to/file.ts#symbol',
-      'find-references',
+      COMMAND.FIND_REFERENCES,
     );
   }
 
@@ -164,7 +157,7 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
   if (!filePath || !symbol) {
     throw new ArgsError(
       'Invalid argument format. Expected: path/to/file.ts#symbol',
-      'find-references',
+      COMMAND.FIND_REFERENCES,
     );
   }
 
@@ -173,7 +166,7 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
   if (n !== undefined && (isNaN(n) || n < 0)) {
     throw new ArgsError(
       'Invalid value for -n option. Expected a non-negative integer.',
-      'find-references',
+      COMMAND.FIND_REFERENCES,
     );
   }
 
@@ -209,7 +202,7 @@ export const parseRenameFileArgs = (argv: string[]): RenameFileArgs => {
   if (positionals.length < 2) {
     throw new ArgsError(
       'Missing required arguments <file> <newFile>',
-      'rename-file',
+      COMMAND.RENAME_FILE,
     );
   }
 
@@ -217,11 +210,17 @@ export const parseRenameFileArgs = (argv: string[]): RenameFileArgs => {
   const newFilePath = positionals[1]!;
 
   if (!filePath) {
-    throw new ArgsError('Missing required argument <file>', 'rename-file');
+    throw new ArgsError(
+      'Missing required argument <file>',
+      COMMAND.RENAME_FILE,
+    );
   }
 
   if (!newFilePath) {
-    throw new ArgsError('Missing required argument <newFile>', 'rename-file');
+    throw new ArgsError(
+      'Missing required argument <newFile>',
+      COMMAND.RENAME_FILE,
+    );
   }
 
   return {
@@ -259,7 +258,7 @@ export const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
   if (positionals.length < 2) {
     throw new ArgsError(
       'Missing required arguments <file#symbol> <newName>',
-      'rename-symbol',
+      COMMAND.RENAME_SYMBOL,
     );
   }
 
@@ -269,7 +268,7 @@ export const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
   if (hashIndex === -1) {
     throw new ArgsError(
       'Invalid argument format. Expected: path/to/file.ts#symbol',
-      'rename-symbol',
+      COMMAND.RENAME_SYMBOL,
     );
   }
 
@@ -279,14 +278,17 @@ export const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
   if (!filePath || !symbol) {
     throw new ArgsError(
       'Invalid argument format. Expected: path/to/file.ts#symbol',
-      'rename-symbol',
+      COMMAND.RENAME_SYMBOL,
     );
   }
 
   const newName = positionals[1]!;
 
   if (!newName) {
-    throw new ArgsError('Missing required argument <newName>', 'rename-symbol');
+    throw new ArgsError(
+      'Missing required argument <newName>',
+      COMMAND.RENAME_SYMBOL,
+    );
   }
 
   const n = values.n !== undefined ? parseInt(values.n, 10) : undefined;
@@ -294,7 +296,7 @@ export const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
   if (n !== undefined && (isNaN(n) || n < 0)) {
     throw new ArgsError(
       'Invalid value for -n option. Expected a non-negative integer.',
-      'rename-symbol',
+      COMMAND.RENAME_SYMBOL,
     );
   }
 
@@ -335,7 +337,7 @@ export const parseGetDefinitionArgs = (argv: string[]): GetDefinitionArgs => {
   if (positionals.length === 0) {
     throw new ArgsError(
       'Missing required argument <file#symbol>',
-      'get-definition',
+      COMMAND.GET_DEFINITION,
     );
   }
 
@@ -345,7 +347,7 @@ export const parseGetDefinitionArgs = (argv: string[]): GetDefinitionArgs => {
   if (hashIndex === -1) {
     throw new ArgsError(
       'Invalid argument format. Expected: path/to/file.ts#symbol',
-      'get-definition',
+      COMMAND.GET_DEFINITION,
     );
   }
 
@@ -355,7 +357,7 @@ export const parseGetDefinitionArgs = (argv: string[]): GetDefinitionArgs => {
   if (!filePath || !symbol) {
     throw new ArgsError(
       'Invalid argument format. Expected: path/to/file.ts#symbol',
-      'get-definition',
+      COMMAND.GET_DEFINITION,
     );
   }
 
@@ -364,7 +366,7 @@ export const parseGetDefinitionArgs = (argv: string[]): GetDefinitionArgs => {
   if (n !== undefined && (isNaN(n) || n < 0)) {
     throw new ArgsError(
       'Invalid value for -n option. Expected a non-negative integer.',
-      'get-definition',
+      COMMAND.GET_DEFINITION,
     );
   }
 

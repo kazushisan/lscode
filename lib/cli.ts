@@ -25,6 +25,7 @@ import {
   RENAME_SYMBOL_HELP,
   RENAME_FILE_HELP,
 } from './util/help.js';
+import { COMMAND } from './util/command.js';
 import {
   formatFindReferences,
   formatGetDefinition,
@@ -65,7 +66,7 @@ const main = () => {
   const commandArgs = argv.slice(1);
 
   switch (command) {
-    case 'find-references': {
+    case COMMAND.FIND_REFERENCES: {
       const args = parseFindReferencesArgs(commandArgs);
 
       if ('help' in args) {
@@ -124,18 +125,18 @@ const main = () => {
       lines.forEach((line) => console.log(line));
       break;
     }
-    case 'get-definition':
-    case 'get-type-definition': {
+    case COMMAND.GET_DEFINITION:
+    case COMMAND.GET_TYPE_DEFINITION: {
       const args = parseGetDefinitionArgs(commandArgs);
 
       if ('help' in args) {
         console.log(
           (() => {
             switch (command) {
-              case 'get-definition': {
+              case COMMAND.GET_DEFINITION: {
                 return GET_DEFINITION_HELP;
               }
-              case 'get-type-definition': {
+              case COMMAND.GET_TYPE_DEFINITION: {
                 return GET_TYPE_DEFINITION_HELP;
               }
               default: {
@@ -183,10 +184,10 @@ const main = () => {
         service,
         operation: (() => {
           switch (command) {
-            case 'get-definition': {
+            case COMMAND.GET_DEFINITION: {
               return OPERATION.DEFINITION;
             }
-            case 'get-type-definition': {
+            case COMMAND.GET_TYPE_DEFINITION: {
               return OPERATION.TYPE_DEFINITION;
             }
             default: {
@@ -212,7 +213,7 @@ const main = () => {
       lines.forEach((line) => console.log(line));
       break;
     }
-    case 'rename-symbol': {
+    case COMMAND.RENAME_SYMBOL: {
       const args = parseRenameSymbolArgs(commandArgs);
 
       if ('help' in args) {
@@ -266,7 +267,7 @@ const main = () => {
       applyEdits(edits);
       break;
     }
-    case 'rename-file': {
+    case COMMAND.RENAME_FILE: {
       const args = parseRenameFileArgs(commandArgs);
 
       if ('help' in args) {
@@ -322,19 +323,19 @@ try {
   if (error instanceof ArgsError) {
     console.error(`Error: ${error.message}`);
     switch (error.command) {
-      case 'find-references':
+      case COMMAND.FIND_REFERENCES:
         console.log(FIND_REFERENCES_HELP);
         break;
-      case 'get-definition':
+      case COMMAND.GET_DEFINITION:
         console.log(GET_DEFINITION_HELP);
         break;
-      case 'get-type-definition':
+      case COMMAND.GET_TYPE_DEFINITION:
         console.log(GET_TYPE_DEFINITION_HELP);
         break;
-      case 'rename-symbol':
+      case COMMAND.RENAME_SYMBOL:
         console.log(RENAME_SYMBOL_HELP);
         break;
-      case 'rename-file':
+      case COMMAND.RENAME_FILE:
         console.log(RENAME_FILE_HELP);
         break;
       default:
