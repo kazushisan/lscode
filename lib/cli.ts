@@ -7,7 +7,7 @@ import { findReferences } from './util/findReferences.js';
 import { setupLanguageService } from './util/languageService.js';
 import { resolveSymbol, SymbolError } from './util/symbol.js';
 import { getDefinition, OPERATION } from './util/getDefinition.js';
-import { renameSymbol, RenameSymbolError } from './util/renameSymbol.js';
+import { renameSymbol } from './util/renameSymbol.js';
 import { renameFile, RenameFileError } from './util/renameFile.js';
 import {
   parseMainArgs,
@@ -228,12 +228,33 @@ const main = () => {
 
       const symbolIndex = n !== undefined ? n : 0;
 
-      const { edits, resolvedConfigPath } = renameSymbol({
-        symbol,
-        fileName,
+      const content = ts.sys.readFile(fileName);
+      if (content === undefined) {
+        throw new Error(`Failed to read file: ${fileName}`);
+      }
+
+      const { service, resolvedConfigPath } = setupLanguageService({
         cwd,
         tsconfig,
+        fileName,
+      });
+
+      const program = service.getProgram();
+      if (!program) {
+        throw new Error('Failed to get program from language service');
+      }
+
+      const { declaration } = resolveSymbol({
+        keyword: symbol,
+        fileName,
         n: symbolIndex,
+        program,
+      });
+
+      const { edits } = renameSymbol({
+        fileName,
+        declaration,
+        service,
         newName,
       });
 
@@ -318,7 +339,6 @@ try {
 
   if (
     error instanceof SymbolError ||
-    error instanceof RenameSymbolError ||
     error instanceof RenameFileError ||
     error instanceof TsconfigError
   ) {

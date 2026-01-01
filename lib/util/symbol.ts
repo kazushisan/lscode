@@ -21,6 +21,7 @@ const getTokenAtPosition = (
   return result;
 };
 
+// tsr-skip used in test
 export const findSymbol = (
   program: ts.Program,
   fileName: string,
