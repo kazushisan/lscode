@@ -1,4 +1,5 @@
 import { parseArgs } from 'node:util';
+import { ArgsError } from './error.js';
 
 const KNOWN_COMMANDS = [
   'find-references',
@@ -64,16 +65,6 @@ type RenameFileArgs =
       newFilePath: string;
       tsconfig?: string;
     };
-
-export class ArgsError extends Error {
-  constructor(
-    message: string,
-    public command: Command,
-  ) {
-    super(message);
-    this.name = 'ArgsError';
-  }
-}
 
 export const parseMainArgs = (argv: string[]): MainArgs => {
   // If first argument is a known command, let the sub-command parser handle it

@@ -1,23 +1,6 @@
 import ts from 'typescript';
 import { applyTextChanges, TextChange } from './edit.js';
-
-// tsr-skip used in test
-export const ERROR_TYPE = {
-  FILE_NOT_FOUND: 'FILE_NOT_FOUND',
-} as const;
-
-type RenameFileErrorType = (typeof ERROR_TYPE)[keyof typeof ERROR_TYPE];
-
-// tsr-skip used in test
-export class RenameFileError extends Error {
-  type: RenameFileErrorType;
-
-  constructor(message: string, type: RenameFileErrorType) {
-    super(message);
-    this.name = 'RenameFileError';
-    this.type = type;
-  }
-}
+import { CommandError, COMMAND_ERROR_TYPE } from './error.js';
 
 export const renameFile = ({
   fileName,
@@ -30,9 +13,9 @@ export const renameFile = ({
 }) => {
   const content = ts.sys.readFile(fileName);
   if (content === undefined) {
-    throw new RenameFileError(
+    throw new CommandError(
       `Failed to read file: ${fileName}`,
-      ERROR_TYPE.FILE_NOT_FOUND,
+      COMMAND_ERROR_TYPE.RENAME_FILE_NOT_FOUND,
     );
   }
 

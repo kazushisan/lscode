@@ -1,7 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import ts from 'typescript';
-import { findSymbol, resolveSymbol, ERROR_TYPE } from './symbol.js';
+import { findSymbol, resolveSymbol } from './symbol.js';
+import { COMMAND_ERROR_TYPE } from './error.js';
 
 const createProgram = (files: { [fileName: string]: string }) => {
   const compilerOptions: ts.CompilerOptions = {
@@ -504,11 +505,11 @@ export const scoped = () => {
           });
         },
         (error: Error) => {
-          assert.strictEqual(error.name, 'SymbolError');
+          assert.strictEqual(error.name, 'CommandError');
           assert.ok('type' in error);
           assert.strictEqual(
             (error as Error & { type: string }).type,
-            ERROR_TYPE.INDEX_OUT_OF_RANGE,
+            COMMAND_ERROR_TYPE.SYMBOL_INDEX_OUT_OF_RANGE,
           );
           assert.ok(error.message.includes('10'));
           assert.ok(error.message.includes('out of range'));
@@ -532,11 +533,11 @@ export const scoped = () => {
           });
         },
         (error: Error) => {
-          assert.strictEqual(error.name, 'SymbolError');
+          assert.strictEqual(error.name, 'CommandError');
           assert.ok('type' in error);
           assert.strictEqual(
             (error as Error & { type: string }).type,
-            ERROR_TYPE.INDEX_OUT_OF_RANGE,
+            COMMAND_ERROR_TYPE.SYMBOL_INDEX_OUT_OF_RANGE,
           );
           return true;
         },
@@ -545,7 +546,7 @@ export const scoped = () => {
   });
 
   describe('error handling', () => {
-    it('should throw NOT_FOUND error when symbol does not exist', () => {
+    it('should throw SYMBOL_NOT_FOUND error when symbol does not exist', () => {
       const program = createProgram({
         'test.ts': 'const myVar = 123;',
       });
@@ -560,11 +561,11 @@ export const scoped = () => {
           });
         },
         (error: Error) => {
-          assert.strictEqual(error.name, 'SymbolError');
+          assert.strictEqual(error.name, 'CommandError');
           assert.ok('type' in error);
           assert.strictEqual(
             (error as Error & { type: string }).type,
-            ERROR_TYPE.NOT_FOUND,
+            COMMAND_ERROR_TYPE.SYMBOL_NOT_FOUND,
           );
           assert.ok(error.message.includes('nonExistentSymbol'));
           return true;
@@ -572,7 +573,7 @@ export const scoped = () => {
       );
     });
 
-    it('should throw NOT_FOUND error when file is empty', () => {
+    it('should throw SYMBOL_NOT_FOUND error when file is empty', () => {
       const program = createProgram({
         'test.ts': '',
       });
@@ -587,18 +588,18 @@ export const scoped = () => {
           });
         },
         (error: Error) => {
-          assert.strictEqual(error.name, 'SymbolError');
+          assert.strictEqual(error.name, 'CommandError');
           assert.ok('type' in error);
           assert.strictEqual(
             (error as Error & { type: string }).type,
-            ERROR_TYPE.NOT_FOUND,
+            COMMAND_ERROR_TYPE.SYMBOL_NOT_FOUND,
           );
           return true;
         },
       );
     });
 
-    it('should throw NOT_FOUND error when file only has comments', () => {
+    it('should throw SYMBOL_NOT_FOUND error when file only has comments', () => {
       const program = createProgram({
         'test.ts': '// Just a comment\n/* Another comment */',
       });
@@ -613,11 +614,11 @@ export const scoped = () => {
           });
         },
         (error: Error) => {
-          assert.strictEqual(error.name, 'SymbolError');
+          assert.strictEqual(error.name, 'CommandError');
           assert.ok('type' in error);
           assert.strictEqual(
             (error as Error & { type: string }).type,
-            ERROR_TYPE.NOT_FOUND,
+            COMMAND_ERROR_TYPE.SYMBOL_NOT_FOUND,
           );
           return true;
         },

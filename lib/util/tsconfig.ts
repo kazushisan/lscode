@@ -1,24 +1,6 @@
 import ts from 'typescript';
 import { dirname, resolve } from 'node:path';
-
-// tsr-skip used in test
-export const TSCONFIG_ERROR_TYPE = {
-  TSCONFIG_NOT_FOUND: 'TSCONFIG_NOT_FOUND',
-  FILE_NOT_IN_PROJECT: 'FILE_NOT_IN_PROJECT',
-} as const;
-
-type TsconfigErrorType =
-  (typeof TSCONFIG_ERROR_TYPE)[keyof typeof TSCONFIG_ERROR_TYPE];
-
-export class TsconfigError extends Error {
-  type: TsconfigErrorType;
-
-  constructor(message: string, type: TsconfigErrorType) {
-    super(message);
-    this.name = 'TsconfigError';
-    this.type = type;
-  }
-}
+import { CommandError, COMMAND_ERROR_TYPE } from './error.js';
 
 type ReadDirectory = ts.ParseConfigHost['readDirectory'];
 
@@ -151,9 +133,9 @@ export const getTsConfigPath = ({
     const absoluteConfigPath = resolve(cwd, tsconfig);
 
     if (!fileExists(absoluteConfigPath)) {
-      throw new TsconfigError(
+      throw new CommandError(
         `TypeScript config file not found: ${tsconfig}`,
-        TSCONFIG_ERROR_TYPE.TSCONFIG_NOT_FOUND,
+        COMMAND_ERROR_TYPE.TSCONFIG_NOT_FOUND,
       );
     }
 
@@ -205,18 +187,18 @@ export const getTsconfig = ({
 
   if (!fileNames.includes(fileName)) {
     if (resolvedConfigPath) {
-      throw new TsconfigError(
+      throw new CommandError(
         `${fileName} is not part of the TypeScript project ${resolve(cwd, resolvedConfigPath)}. Hint: use --tsconfig to specify the correct tsconfig file.`,
-        TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
+        COMMAND_ERROR_TYPE.FILE_NOT_IN_PROJECT,
       );
     }
 
     // when does this happen?
-    throw new TsconfigError(
+    throw new CommandError(
       `Could not find a TypeScript project for ${fileName} (no matching 
       tsconfig found). Attempted to use default compiler options with cwd,
        but ${fileName} is not included.`,
-      TSCONFIG_ERROR_TYPE.FILE_NOT_IN_PROJECT,
+      COMMAND_ERROR_TYPE.FILE_NOT_IN_PROJECT,
     );
   }
 
