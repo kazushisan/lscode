@@ -163,12 +163,11 @@ const main = () => {
         return;
       }
 
-      const { filePath, symbol, tsconfig, n } = args;
+      const { filePath, symbol, tsconfig } = args;
+      const n = args.n || 0;
 
       const cwd = process.cwd();
       const fileName = resolve(cwd, filePath);
-
-      const symbolIndex = n !== undefined ? n : 0;
 
       checkFileExists(fileName);
 
@@ -186,7 +185,7 @@ const main = () => {
       const { declaration, symbolsInfo } = resolveSymbol({
         keyword: symbol,
         fileName,
-        n: symbolIndex,
+        n,
         program,
       });
 
@@ -224,7 +223,7 @@ const main = () => {
           ...formatGetDefinition({
             definitions,
             symbols: symbolsInfo,
-            n: symbolIndex,
+            n,
             cwd,
           }),
         ].join('\n'),
@@ -239,12 +238,11 @@ const main = () => {
         return;
       }
 
-      const { filePath, symbol, newName, tsconfig, n } = args;
+      const { filePath, symbol, newName, tsconfig } = args;
+      const n = args.n || 0;
 
       const cwd = process.cwd();
       const fileName = resolve(cwd, filePath);
-
-      const symbolIndex = n !== undefined ? n : 0;
 
       checkFileExists(fileName);
 
@@ -262,7 +260,7 @@ const main = () => {
       const { declaration } = resolveSymbol({
         keyword: symbol,
         fileName,
-        n: symbolIndex,
+        n,
         program,
       });
 
