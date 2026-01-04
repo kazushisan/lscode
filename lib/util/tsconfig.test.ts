@@ -135,28 +135,27 @@ describe('getTsConfigPath', () => {
       assert.strictEqual(result, '/project/tsconfig.json');
     });
 
-    it('should return undefined when default tsconfig.json does not exist', () => {
+    it('should throw CommandError when default tsconfig.json does not exist', () => {
       const files = new Map<string, string>();
 
-      const result = getTsConfigPath({
-        cwd: '/project',
-        fileName: '/project/src/file.ts',
-        fileExists: (path) => files.has(path),
-      });
-
-      assert.strictEqual(result, undefined);
-    });
-
-    it('should not throw when default tsconfig.json does not exist', () => {
-      const files = new Map<string, string>();
-
-      assert.doesNotThrow(() => {
-        getTsConfigPath({
-          cwd: '/project',
-          fileName: '/project/src/file.ts',
-          fileExists: (path) => files.has(path),
-        });
-      });
+      assert.throws(
+        () => {
+          getTsConfigPath({
+            cwd: '/project',
+            fileName: '/project/src/file.ts',
+            fileExists: (path) => files.has(path),
+          });
+        },
+        (error: Error) => {
+          assert.ok(error instanceof CommandError);
+          assert.strictEqual(
+            (error as CommandError).type,
+            COMMAND_ERROR_TYPE.TSCONFIG_NOT_FOUND,
+          );
+          assert.ok(error.message.includes('tsconfig.json'));
+          return true;
+        },
+      );
     });
 
     it('should find tsconfig from references when file is not in root config', () => {

@@ -128,7 +128,7 @@ export const getTsConfigPath = ({
   fileExists: (path: string) => boolean;
   readFile?: (path: string) => string | undefined;
   readDirectory?: ReadDirectory;
-}): string | undefined => {
+}): string => {
   if (tsconfig) {
     const absoluteConfigPath = resolve(cwd, tsconfig);
 
@@ -145,7 +145,10 @@ export const getTsConfigPath = ({
   const defaultConfigPath = resolve(cwd, 'tsconfig.json');
 
   if (!fileExists(defaultConfigPath)) {
-    return undefined;
+    throw new CommandError(
+      `TypeScript config file not found: tsconfig.json`,
+      COMMAND_ERROR_TYPE.TSCONFIG_NOT_FOUND,
+    );
   }
 
   // Find the tsconfig that includes the fileName by traversing from the default config
@@ -178,29 +181,17 @@ export const getTsconfig = ({
   });
 
   const { options, fileNames } = ts.parseJsonConfigFileContent(
-    resolvedConfigPath
-      ? ts.readConfigFile(resolvedConfigPath, ts.sys.readFile).config
-      : {},
+    ts.readConfigFile(resolvedConfigPath, ts.sys.readFile).config,
     ts.sys,
-    resolvedConfigPath ? dirname(resolvedConfigPath) : cwd,
+    dirname(resolvedConfigPath),
   );
 
   if (!fileNames.includes(fileName)) {
-    if (resolvedConfigPath) {
-      throw new CommandError(
-        `${fileName} is not part of the TypeScript project ${resolve(cwd, resolvedConfigPath)}. Hint: use --tsconfig to specify the correct tsconfig file.`,
-        COMMAND_ERROR_TYPE.FILE_NOT_IN_PROJECT,
-      );
-    }
-
-    // when does this happen?
     throw new CommandError(
-      `Could not find a TypeScript project for ${fileName} (no matching 
-      tsconfig found). Attempted to use default compiler options with cwd,
-       but ${fileName} is not included.`,
+      `${fileName} is not part of the TypeScript project ${resolve(cwd, resolvedConfigPath)}. Hint: use --tsconfig to specify the correct tsconfig file.`,
       COMMAND_ERROR_TYPE.FILE_NOT_IN_PROJECT,
     );
   }
 
-  return { options, fileNames, resolvedConfigPath: resolvedConfigPath };
+  return { options, fileNames, resolvedConfigPath };
 };
