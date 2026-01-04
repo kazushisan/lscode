@@ -86,7 +86,7 @@ describe('formatSymbolsInfo function', () => {
     const formatted = formatSymbolsInfo({
       symbols: symbolsInfo,
       cwd: fixturesDir,
-      symbol: 'add',
+      keyword: 'add',
     });
 
     const expected = [
@@ -105,7 +105,7 @@ describe('formatSymbolsInfo function', () => {
     const formatted = formatSymbolsInfo({
       symbols: symbolsInfo,
       cwd: fixturesDir,
-      symbol: 'PI',
+      keyword: 'PI',
     });
 
     const expected = [
@@ -120,7 +120,7 @@ describe('formatSymbolsInfo function', () => {
     const formatted = formatSymbolsInfo({
       symbols: [],
       cwd: fixturesDir,
-      symbol: 'notfound',
+      keyword: 'notfound',
     });
 
     assert.strictEqual(formatted.length, 0);
@@ -141,7 +141,7 @@ describe('formatFindReferences function', () => {
       symbols: symbolsInfo,
       n: 0,
       cwd: fixturesDir,
-      symbol: 'add',
+      keyword: 'add',
     });
 
     const expected = [
@@ -170,7 +170,7 @@ describe('formatFindReferences function', () => {
       symbols: symbolsInfo,
       n: 1,
       cwd: fixturesDir,
-      symbol: 'add',
+      keyword: 'add',
     });
 
     const expected = [
@@ -195,7 +195,7 @@ describe('formatFindReferences function', () => {
       symbols: symbolsInfo,
       n: 0,
       cwd: fixturesDir,
-      symbol: 'PI',
+      keyword: 'PI',
     });
 
     const expected = [
@@ -222,7 +222,7 @@ describe('formatFindReferences function', () => {
       symbols: symbolsInfo,
       n: 0,
       cwd: fixturesDir,
-      symbol: 'multiply',
+      keyword: 'multiply',
     });
 
     const output = formatted.join('\n');

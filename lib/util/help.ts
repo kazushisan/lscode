@@ -1,3 +1,5 @@
+import { COMMAND, Command } from './command.js';
+
 export const MAIN_HELP = `
 lscode - TypeScript's LanguageService for AI coding agents
 
@@ -17,7 +19,7 @@ Options:
 Run 'lscode <command> --help' for more information on a command.
 `.trim();
 
-export const FIND_REFERENCES_HELP = `
+const FIND_REFERENCES_HELP = `
 lscode find-references - Find all references to a symbol in a file
 
 Usage: lscode find-references <file#symbol> [options]
@@ -36,7 +38,7 @@ Examples:
   lscode find-references src/main.ts#myFunction -n 1
 `.trim();
 
-export const GET_DEFINITION_HELP = `
+const GET_DEFINITION_HELP = `
 lscode get-definition - Get the definition of a symbol in a file
 
 Usage: lscode get-definition <file#symbol> [options]
@@ -55,7 +57,7 @@ Examples:
   lscode get-definition src/main.ts#myFunction -n 1
 `.trim();
 
-export const GET_TYPE_DEFINITION_HELP = `
+const GET_TYPE_DEFINITION_HELP = `
 lscode get-type-definition - Get the type definition of a symbol in a file
 
 Usage: lscode get-type-definition <file#symbol> [options]
@@ -74,7 +76,7 @@ Examples:
   lscode get-type-definition src/main.ts#myVariable -n 1
 `.trim();
 
-export const RENAME_SYMBOL_HELP = `
+const RENAME_SYMBOL_HELP = `
 lscode rename-symbol - Rename a symbol across all files
 
 Usage: lscode rename-symbol <file#symbol> <newName> [options]
@@ -94,7 +96,7 @@ Examples:
   lscode rename-symbol src/main.ts#myFunction newFunctionName -n 1
 `.trim();
 
-export const RENAME_FILE_HELP = `
+const RENAME_FILE_HELP = `
 lscode rename-file - Rename a file and update all imports
 
 Usage: lscode rename-file <file> <newFile> [options]
@@ -111,3 +113,20 @@ Examples:
   lscode rename-file src/utils.ts src/helpers.ts
   lscode rename-file src/utils.ts src/helpers.ts --tsconfig ./tsconfig.json
 `.trim();
+
+export const getSubcommandHelp = (command: Command) => {
+  switch (command) {
+    case COMMAND.FIND_REFERENCES:
+      return FIND_REFERENCES_HELP;
+    case COMMAND.GET_DEFINITION:
+      return GET_DEFINITION_HELP;
+    case COMMAND.GET_TYPE_DEFINITION:
+      return GET_TYPE_DEFINITION_HELP;
+    case COMMAND.RENAME_SYMBOL:
+      return RENAME_SYMBOL_HELP;
+    case COMMAND.RENAME_FILE:
+      return RENAME_FILE_HELP;
+    default:
+      throw new Error(`Unknown command: ${command satisfies never}`);
+  }
+};

@@ -18,11 +18,11 @@ interface SymbolInfo {
 export const formatSymbolsInfo = ({
   symbols,
   cwd,
-  symbol,
+  keyword,
 }: {
   symbols: SymbolInfo[];
   cwd: string;
-  symbol: string;
+  keyword: string;
 }): string[] => {
   if (symbols.length === 0) {
     return [];
@@ -41,7 +41,7 @@ export const formatSymbolsInfo = ({
     const trimmedCode = code.trim();
     const leadingWhitespace = code.length - code.trimStart().length;
     const start = symbolInfo.character - leadingWhitespace;
-    const end = start + symbol.length;
+    const end = start + keyword.length;
 
     const beforeSymbol = trimmedCode.substring(0, start);
     const symbolText = trimmedCode.substring(start, end);
@@ -81,13 +81,13 @@ export const formatFindReferences = ({
   symbols,
   n,
   cwd,
-  symbol,
+  keyword,
 }: {
   references: Reference[];
   symbols: SymbolInfo[];
   n: number;
   cwd: string;
-  symbol: string;
+  keyword: string;
 }): string[] => {
   const output: string[] = [];
 
@@ -124,7 +124,7 @@ export const formatFindReferences = ({
     );
 
     const start = ref.character;
-    const end = start + symbol.length;
+    const end = start + keyword.length;
 
     const beforeSymbol = lineContent.substring(0, start);
     const symbolText = lineContent.substring(start, end);

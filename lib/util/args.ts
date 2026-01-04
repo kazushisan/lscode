@@ -15,38 +15,23 @@ type MainArgs =
       command: Command | null;
     };
 
-type FindReferencesArgs =
-  | {
-      help: true;
-    }
+type SymbolCommandArgs =
+  | { help: true }
   | {
       filePath: string;
-      symbol: string;
-      tsconfig?: string;
-      n?: number;
-    };
-
-type GetDefinitionArgs =
-  | {
-      help: true;
-    }
-  | {
-      filePath: string;
-      symbol: string;
+      keyword: string;
       tsconfig?: string;
       n?: number;
     };
 
 type RenameSymbolArgs =
-  | {
-      help: true;
-    }
+  | { help: true }
   | {
       filePath: string;
-      symbol: string;
-      newName: string;
+      keyword: string;
       tsconfig?: string;
       n?: number;
+      newName: string;
     };
 
 type RenameFileArgs =
@@ -109,7 +94,49 @@ export const parseMainArgs = (argv: string[]): MainArgs => {
   };
 };
 
-export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
+const extractSymbolCommandArgs = (
+  arg: string,
+  nValue: string | undefined,
+  command: Command,
+): { filePath: string; keyword: string; n?: number } => {
+  const hashIndex = arg.lastIndexOf('#');
+
+  if (hashIndex === -1) {
+    throw new ArgsError(
+      'Invalid argument format. Expected: path/to/file.ts#symbol',
+      command,
+    );
+  }
+
+  const filePath = arg.substring(0, hashIndex);
+  const keyword = arg.substring(hashIndex + 1);
+
+  if (!filePath || !keyword) {
+    throw new ArgsError(
+      'Invalid argument format. Expected: path/to/file.ts#symbol',
+      command,
+    );
+  }
+
+  const n = nValue !== undefined ? parseInt(nValue, 10) : undefined;
+
+  if (n !== undefined && (isNaN(n) || n < 0)) {
+    throw new ArgsError(
+      'Invalid value for -n option. Expected a non-negative integer.',
+      command,
+    );
+  }
+
+  return { filePath, keyword, n };
+};
+
+/**
+ * Parses arguments for symbol-based commands (find-references, get-definition, get-type-definition).
+ */
+const parseSymbolCommandArgs = (
+  argv: string[],
+  command: Command,
+): SymbolCommandArgs => {
   const { values, positionals } = parseArgs({
     args: argv,
     options: {
@@ -129,56 +156,28 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
   });
 
   if (values.help) {
-    return {
-      help: true,
-    };
+    return { help: true };
   }
 
   if (positionals.length === 0) {
-    throw new ArgsError(
-      'Missing required argument <file#symbol>',
-      COMMAND.FIND_REFERENCES,
-    );
+    throw new ArgsError('Missing required argument <file#symbol>', command);
   }
 
-  const arg = positionals[0]!;
-  const hashIndex = arg.lastIndexOf('#');
-
-  if (hashIndex === -1) {
-    throw new ArgsError(
-      'Invalid argument format. Expected: path/to/file.ts#symbol',
-      COMMAND.FIND_REFERENCES,
-    );
-  }
-
-  const filePath = arg.substring(0, hashIndex);
-  const symbol = arg.substring(hashIndex + 1);
-
-  if (!filePath || !symbol) {
-    throw new ArgsError(
-      'Invalid argument format. Expected: path/to/file.ts#symbol',
-      COMMAND.FIND_REFERENCES,
-    );
-  }
-
-  const n = values.n !== undefined ? parseInt(values.n, 10) : undefined;
-
-  if (n !== undefined && (isNaN(n) || n < 0)) {
-    throw new ArgsError(
-      'Invalid value for -n option. Expected a non-negative integer.',
-      COMMAND.FIND_REFERENCES,
-    );
-  }
+  const { filePath, keyword, n } = extractSymbolCommandArgs(
+    positionals[0]!,
+    values.n,
+    command,
+  );
 
   return {
     filePath,
-    symbol,
+    keyword,
     tsconfig: values.tsconfig,
     n,
   };
 };
 
-export const parseRenameFileArgs = (argv: string[]): RenameFileArgs => {
+const parseRenameFileArgs = (argv: string[]): RenameFileArgs => {
   const { values, positionals } = parseArgs({
     args: argv,
     options: {
@@ -230,7 +229,7 @@ export const parseRenameFileArgs = (argv: string[]): RenameFileArgs => {
   };
 };
 
-export const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
+const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
   const { values, positionals } = parseArgs({
     args: argv,
     options: {
@@ -250,34 +249,12 @@ export const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
   });
 
   if (values.help) {
-    return {
-      help: true,
-    };
+    return { help: true };
   }
 
   if (positionals.length < 2) {
     throw new ArgsError(
       'Missing required arguments <file#symbol> <newName>',
-      COMMAND.RENAME_SYMBOL,
-    );
-  }
-
-  const arg = positionals[0]!;
-  const hashIndex = arg.lastIndexOf('#');
-
-  if (hashIndex === -1) {
-    throw new ArgsError(
-      'Invalid argument format. Expected: path/to/file.ts#symbol',
-      COMMAND.RENAME_SYMBOL,
-    );
-  }
-
-  const filePath = arg.substring(0, hashIndex);
-  const symbol = arg.substring(hashIndex + 1);
-
-  if (!filePath || !symbol) {
-    throw new ArgsError(
-      'Invalid argument format. Expected: path/to/file.ts#symbol',
       COMMAND.RENAME_SYMBOL,
     );
   }
@@ -291,89 +268,111 @@ export const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
     );
   }
 
-  const n = values.n !== undefined ? parseInt(values.n, 10) : undefined;
-
-  if (n !== undefined && (isNaN(n) || n < 0)) {
-    throw new ArgsError(
-      'Invalid value for -n option. Expected a non-negative integer.',
-      COMMAND.RENAME_SYMBOL,
-    );
-  }
+  const { filePath, keyword, n } = extractSymbolCommandArgs(
+    positionals[0]!,
+    values.n,
+    COMMAND.RENAME_SYMBOL,
+  );
 
   return {
     filePath,
-    symbol,
+    keyword,
     newName,
     tsconfig: values.tsconfig,
     n,
   };
 };
 
-export const parseGetDefinitionArgs = (argv: string[]): GetDefinitionArgs => {
-  const { values, positionals } = parseArgs({
-    args: argv,
-    options: {
-      help: {
-        type: 'boolean',
-        short: 'h',
-      },
-      tsconfig: {
-        type: 'string',
-      },
-      n: {
-        type: 'string',
-        short: 'n',
-      },
-    },
-    allowPositionals: true,
-  });
-
-  if (values.help) {
-    return {
-      help: true,
+type Args =
+  | {
+      command: Command;
+      help: true;
+    }
+  | {
+      type: 'symbol';
+      command:
+        | typeof COMMAND.FIND_REFERENCES
+        | typeof COMMAND.GET_DEFINITION
+        | typeof COMMAND.GET_TYPE_DEFINITION;
+      help: false;
+      filePath: string;
+      keyword: string;
+      tsconfig?: string;
+      n: number;
+    }
+  | {
+      type: 'symbol';
+      command: typeof COMMAND.RENAME_SYMBOL;
+      help: false;
+      filePath: string;
+      keyword: string;
+      tsconfig?: string;
+      n: number;
+      newName: string;
+    }
+  | {
+      type: 'file';
+      command: typeof COMMAND.RENAME_FILE;
+      help: false;
+      filePath: string;
+      newFilePath: string;
+      tsconfig?: string;
     };
+
+export const parseSubcommandArgs = (
+  command: Command,
+  commandArgs: string[],
+): Args => {
+  switch (command) {
+    case COMMAND.FIND_REFERENCES:
+    case COMMAND.GET_DEFINITION:
+    case COMMAND.GET_TYPE_DEFINITION: {
+      const args = parseSymbolCommandArgs(commandArgs, command);
+      if ('help' in args) {
+        return { help: true, command };
+      }
+      return {
+        type: 'symbol',
+        help: false,
+        command,
+        filePath: args.filePath,
+        keyword: args.keyword,
+        tsconfig: args.tsconfig,
+        n: args.n || 0,
+      };
+    }
+    case COMMAND.RENAME_SYMBOL: {
+      const args = parseRenameSymbolArgs(commandArgs);
+      if ('help' in args) {
+        return { help: true, command };
+      }
+      return {
+        type: 'symbol',
+        help: false,
+        command,
+        filePath: args.filePath,
+        keyword: args.keyword,
+        tsconfig: args.tsconfig,
+        n: args.n || 0,
+        newName: args.newName,
+      };
+    }
+    case COMMAND.RENAME_FILE: {
+      const args = parseRenameFileArgs(commandArgs);
+      if ('help' in args) {
+        return { help: true, command };
+      }
+      return {
+        type: 'file',
+        help: false,
+        command,
+        filePath: args.filePath,
+        newFilePath: args.newFilePath,
+        tsconfig: args.tsconfig,
+      };
+    }
+    default: {
+      throw new Error(`Unknown command: ${command satisfies never}`);
+    }
   }
-
-  if (positionals.length === 0) {
-    throw new ArgsError(
-      'Missing required argument <file#symbol>',
-      COMMAND.GET_DEFINITION,
-    );
-  }
-
-  const arg = positionals[0]!;
-  const hashIndex = arg.lastIndexOf('#');
-
-  if (hashIndex === -1) {
-    throw new ArgsError(
-      'Invalid argument format. Expected: path/to/file.ts#symbol',
-      COMMAND.GET_DEFINITION,
-    );
-  }
-
-  const filePath = arg.substring(0, hashIndex);
-  const symbol = arg.substring(hashIndex + 1);
-
-  if (!filePath || !symbol) {
-    throw new ArgsError(
-      'Invalid argument format. Expected: path/to/file.ts#symbol',
-      COMMAND.GET_DEFINITION,
-    );
-  }
-
-  const n = values.n !== undefined ? parseInt(values.n, 10) : undefined;
-
-  if (n !== undefined && (isNaN(n) || n < 0)) {
-    throw new ArgsError(
-      'Invalid value for -n option. Expected a non-negative integer.',
-      COMMAND.GET_DEFINITION,
-    );
-  }
-
-  return {
-    filePath,
-    symbol,
-    tsconfig: values.tsconfig,
-    n,
-  };
 };
