@@ -25,7 +25,7 @@ import {
   RENAME_SYMBOL_HELP,
   RENAME_FILE_HELP,
 } from './util/help.js';
-import { COMMAND } from './util/command.js';
+import { COMMAND, Command } from './util/command.js';
 import {
   formatFindReferences,
   formatGetDefinition,
@@ -53,6 +53,96 @@ const checkFileExists = (fileName: string) => {
   }
 };
 
+type Args =
+  | {
+      command: Command;
+      help: true;
+    }
+  | {
+      type: 'symbol';
+      command:
+        | typeof COMMAND.FIND_REFERENCES
+        | typeof COMMAND.GET_DEFINITION
+        | typeof COMMAND.GET_TYPE_DEFINITION;
+      help: false;
+      filePath: string;
+      symbol: string;
+      tsconfig?: string;
+      n?: number;
+    }
+  | {
+      type: 'symbol';
+      command: typeof COMMAND.RENAME_SYMBOL;
+      help: false;
+      filePath: string;
+      symbol: string;
+      tsconfig?: string;
+      n?: number;
+      newName: string;
+    }
+  | {
+      type: 'file';
+      command: typeof COMMAND.RENAME_FILE;
+      help: false;
+      filePath: string;
+      newFilePath: string;
+      tsconfig?: string;
+    };
+
+const parseArgs = (command: Command, commandArgs: string[]): Args => {
+  switch (command) {
+    case COMMAND.FIND_REFERENCES: {
+      const args = parseFindReferencesArgs(commandArgs);
+      if ('help' in args) {
+        return { help: true, command };
+      }
+      return { type: 'symbol', help: false, command, ...args };
+    }
+    case COMMAND.GET_DEFINITION:
+    case COMMAND.GET_TYPE_DEFINITION: {
+      const args = parseGetDefinitionArgs(commandArgs);
+      if ('help' in args) {
+        return { help: true, command };
+      }
+      return { type: 'symbol', help: false, command, ...args };
+    }
+    case COMMAND.RENAME_SYMBOL: {
+      const args = parseRenameSymbolArgs(commandArgs);
+      if ('help' in args) {
+        return { help: true, command };
+      }
+      return { type: 'symbol', help: false, command, ...args };
+    }
+    case COMMAND.RENAME_FILE: {
+      const args = parseRenameFileArgs(commandArgs);
+      if ('help' in args) {
+        return { help: true, command };
+      }
+      return { type: 'file', help: false, command, ...args };
+    }
+    default: {
+      throw new Error(`Unknown command: ${command satisfies never}`);
+    }
+  }
+};
+
+const getHelpText = (command: Command): string => {
+  switch (command) {
+    case COMMAND.FIND_REFERENCES:
+      return FIND_REFERENCES_HELP;
+    case COMMAND.GET_DEFINITION:
+      return GET_DEFINITION_HELP;
+    case COMMAND.GET_TYPE_DEFINITION:
+      return GET_TYPE_DEFINITION_HELP;
+    case COMMAND.RENAME_SYMBOL:
+      return RENAME_SYMBOL_HELP;
+    case COMMAND.RENAME_FILE:
+      return RENAME_FILE_HELP;
+    default:
+      throw new Error(`Unknown command: ${command satisfies never}`);
+  }
+};
+
 const main = () => {
   const argv = process.argv.slice(2);
   const mainArgs = parseMainArgs(argv);
@@ -75,41 +165,48 @@ const main = () => {
   }
 
   const commandArgs = argv.slice(1);
+  const args = parseArgs(command, commandArgs);
 
-  switch (command) {
+  if (args.help) {
+    console.log(getHelpText(command));
+    return;
+  }
+
+  const cwd = process.cwd();
+  const fileName = resolve(cwd, args.filePath);
+
+  checkFileExists(fileName);
+
+  const { service, resolvedConfigPath } = setupLanguageService({
+    cwd,
+    tsconfig: args.tsconfig,
+    fileName,
+  });
+
+  const program = service.getProgram();
+
+  if (!program) {
+    throw new Error('Failed to get program from language service');
+  }
+
+  const prepared =
+    args.type === 'symbol'
+      ? {
+          ...args,
+          resolvedSymbol: resolveSymbol({
+            keyword: args.symbol,
+            fileName,
+            n: args.n || 0,
+            program,
+          }),
+        }
+      : args;
+
+  switch (prepared.command) {
     case COMMAND.FIND_REFERENCES: {
-      const args = parseFindReferencesArgs(commandArgs);
-
-      if ('help' in args) {
-        console.log(FIND_REFERENCES_HELP);
-        return;
-      }
-
-      const { filePath, symbol, tsconfig } = args;
-      const n = args.n || 0;
-
-      const cwd = process.cwd();
-      const fileName = resolve(cwd, filePath);
-
-      checkFileExists(fileName);
-
-      const { service, resolvedConfigPath } = setupLanguageService({
-        cwd,
-        tsconfig,
-        fileName,
-      });
-
-      const program = service.getProgram();
-      if (!program) {
-        throw new Error('Failed to get program from language service');
-      }
-
-      const { declaration, symbolsInfo } = resolveSymbol({
-        keyword: symbol,
-        fileName,
-        n,
-        program,
-      });
+      const { symbol } = prepared;
+      const n = prepared.n || 0;
+      const { declaration, symbolsInfo } = prepared.resolvedSymbol;
 
       const { references } = findReferences({
         fileName,
@@ -142,59 +239,16 @@ const main = () => {
     }
     case COMMAND.GET_DEFINITION:
     case COMMAND.GET_TYPE_DEFINITION: {
-      const args = parseGetDefinitionArgs(commandArgs);
-
-      if ('help' in args) {
-        console.log(
-          (() => {
-            switch (command) {
-              case COMMAND.GET_DEFINITION: {
-                return GET_DEFINITION_HELP;
-              }
-              case COMMAND.GET_TYPE_DEFINITION: {
-                return GET_TYPE_DEFINITION_HELP;
-              }
-              default: {
-                throw new Error(`Unknown command: ${command satisfies never}`);
-              }
-            }
-          })(),
-        );
-        return;
-      }
-
-      const { filePath, symbol, tsconfig } = args;
-      const n = args.n || 0;
-
-      const cwd = process.cwd();
-      const fileName = resolve(cwd, filePath);
-
-      checkFileExists(fileName);
-
-      const { service, resolvedConfigPath } = setupLanguageService({
-        cwd,
-        tsconfig,
-        fileName,
-      });
-
-      const program = service.getProgram();
-      if (!program) {
-        throw new Error('Failed to get program from language service');
-      }
-
-      const { declaration, symbolsInfo } = resolveSymbol({
-        keyword: symbol,
-        fileName,
-        n,
-        program,
-      });
+      const { symbol } = prepared;
+      const n = prepared.n || 0;
+      const { declaration, symbolsInfo } = prepared.resolvedSymbol;
 
       const { definitions } = getDefinition({
         fileName,
         declaration,
         service,
         operation: (() => {
-          switch (command) {
+          switch (prepared.command) {
             case COMMAND.GET_DEFINITION: {
               return OPERATION.DEFINITION;
             }
@@ -202,7 +256,9 @@ const main = () => {
               return OPERATION.TYPE_DEFINITION;
             }
             default: {
-              throw new Error(`Unknown command: ${command satisfies never}`);
+              throw new Error(
+                `Unknown command: ${prepared.command satisfies never}`,
+              );
             }
           }
         })(),
@@ -231,38 +287,8 @@ const main = () => {
       break;
     }
     case COMMAND.RENAME_SYMBOL: {
-      const args = parseRenameSymbolArgs(commandArgs);
-
-      if ('help' in args) {
-        console.log(RENAME_SYMBOL_HELP);
-        return;
-      }
-
-      const { filePath, symbol, newName, tsconfig } = args;
-      const n = args.n || 0;
-
-      const cwd = process.cwd();
-      const fileName = resolve(cwd, filePath);
-
-      checkFileExists(fileName);
-
-      const { service, resolvedConfigPath } = setupLanguageService({
-        cwd,
-        tsconfig,
-        fileName,
-      });
-
-      const program = service.getProgram();
-      if (!program) {
-        throw new Error('Failed to get program from language service');
-      }
-
-      const { declaration } = resolveSymbol({
-        keyword: symbol,
-        fileName,
-        n,
-        program,
-      });
+      const { newName } = prepared;
+      const { declaration } = prepared.resolvedSymbol;
 
       const { edits } = renameSymbol({
         fileName,
@@ -281,26 +307,7 @@ const main = () => {
       break;
     }
     case COMMAND.RENAME_FILE: {
-      const args = parseRenameFileArgs(commandArgs);
-
-      if ('help' in args) {
-        console.log(RENAME_FILE_HELP);
-        return;
-      }
-
-      const { filePath, newFilePath, tsconfig } = args;
-
-      const cwd = process.cwd();
-      const fileName = resolve(cwd, filePath);
-      const newFileName = resolve(cwd, newFilePath);
-
-      checkFileExists(fileName);
-
-      const { service, resolvedConfigPath } = setupLanguageService({
-        cwd,
-        tsconfig,
-        fileName,
-      });
+      const newFileName = resolve(cwd, prepared.newFilePath);
 
       const { edits } = renameFile({
         fileName,
