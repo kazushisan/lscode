@@ -100,7 +100,7 @@ const main = () => {
           symbol: resolveSymbol({
             keyword: args.keyword,
             fileName,
-            n: args.n || 0,
+            n: args.n,
             program,
           }),
         }
@@ -109,7 +109,6 @@ const main = () => {
   switch (prepared.command) {
     case COMMAND.FIND_REFERENCES: {
       const { keyword } = prepared;
-      const n = prepared.n || 0;
       const { declaration, symbolsInfo } = prepared.symbol;
 
       const { references } = findReferences({
@@ -133,7 +132,7 @@ const main = () => {
           ...formatFindReferences({
             references,
             symbols: symbolsInfo,
-            n,
+            n: prepared.n,
             cwd,
             keyword,
           }),
@@ -144,7 +143,6 @@ const main = () => {
     case COMMAND.GET_DEFINITION:
     case COMMAND.GET_TYPE_DEFINITION: {
       const { keyword } = prepared;
-      const n = prepared.n || 0;
       const { declaration, symbolsInfo } = prepared.symbol;
 
       const { definitions } = getDefinition({
@@ -183,7 +181,7 @@ const main = () => {
           ...formatGetDefinition({
             definitions,
             symbols: symbolsInfo,
-            n,
+            n: prepared.n,
             cwd,
           }),
         ].join('\n'),
