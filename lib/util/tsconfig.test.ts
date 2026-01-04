@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import ts from 'typescript';
 import picomatch from 'picomatch';
-import { getTsConfigPath } from './tsconfig.js';
+import { getTsConfigPath, getTsconfig } from './tsconfig.js';
 import { CommandError, COMMAND_ERROR_TYPE } from './error.js';
 import { relative } from 'node:path';
 
@@ -37,6 +37,8 @@ describe('getTsConfigPath', () => {
         tsconfig: 'tsconfig.custom.json',
         fileName: '/project/src/file.ts',
         fileExists: (path) => files.has(path),
+        readFile: (path) => files.get(path),
+        readDirectory: createMockReadDirectory(files),
       });
 
       assert.strictEqual(result, '/project/tsconfig.custom.json');
@@ -50,6 +52,8 @@ describe('getTsConfigPath', () => {
         tsconfig: 'config/tsconfig.json',
         fileName: '/project/src/file.ts',
         fileExists: (path) => files.has(path),
+        readFile: (path) => files.get(path),
+        readDirectory: createMockReadDirectory(files),
       });
 
       assert.strictEqual(result, '/project/config/tsconfig.json');
@@ -63,6 +67,8 @@ describe('getTsConfigPath', () => {
         tsconfig: '/other/tsconfig.json',
         fileName: '/project/src/file.ts',
         fileExists: (path) => files.has(path),
+        readFile: (path) => files.get(path),
+        readDirectory: createMockReadDirectory(files),
       });
 
       assert.strictEqual(result, '/other/tsconfig.json');
@@ -78,6 +84,8 @@ describe('getTsConfigPath', () => {
             tsconfig: 'nonexistent.json',
             fileName: '/project/src/file.ts',
             fileExists: (path) => files.has(path),
+            readFile: (path) => files.get(path),
+            readDirectory: createMockReadDirectory(files),
           });
         },
         (error: Error) => {
@@ -144,6 +152,8 @@ describe('getTsConfigPath', () => {
             cwd: '/project',
             fileName: '/project/src/file.ts',
             fileExists: (path) => files.has(path),
+            readFile: (path) => files.get(path),
+            readDirectory: createMockReadDirectory(files),
           });
         },
         (error: Error) => {
@@ -457,6 +467,194 @@ describe('getTsConfigPath', () => {
       });
 
       assert.strictEqual(result, '/project/tsconfig.json');
+    });
+  });
+});
+
+describe('getTsconfig', () => {
+  describe('when strict is false and tsconfig is not set', () => {
+    it('should return undefined for resolvedConfigPath and use default options', () => {
+      const files = new Map([
+        [
+          '/project/tsconfig.json',
+          JSON.stringify({
+            compilerOptions: {},
+            include: ['src/**/*'],
+          }),
+        ],
+        ['/project/src/file.ts', ''],
+      ]);
+
+      const result = getTsconfig({
+        cwd: '/project',
+        fileName: '/project/src/file.ts',
+        strict: false,
+        fileExists: (path) => files.has(path),
+        readFile: (path) => files.get(path),
+        readDirectory: createMockReadDirectory(files),
+      });
+
+      assert.strictEqual(result.resolvedConfigPath, undefined);
+      assert.ok(result.options);
+      assert.ok(Array.isArray(result.fileNames));
+    });
+
+    it('should not search for tsconfig even if tsconfig.json exists', () => {
+      const files = new Map([
+        [
+          '/project/tsconfig.json',
+          JSON.stringify({
+            compilerOptions: { strict: true },
+            include: ['src/**/*'],
+          }),
+        ],
+        ['/project/src/file.ts', ''],
+      ]);
+
+      // This test verifies that even with a tsconfig.json present,
+      // when strict is false and tsconfig is not set, it doesn't read it
+      const result = getTsconfig({
+        cwd: '/project',
+        fileName: '/project/src/file.ts',
+        strict: false,
+        fileExists: (path) => files.has(path),
+        readFile: (path) => files.get(path),
+        readDirectory: createMockReadDirectory(files),
+      });
+
+      assert.strictEqual(result.resolvedConfigPath, undefined);
+      // Should match default options from empty config, not the tsconfig.json
+      assert.strictEqual(result.options.strict, undefined);
+    });
+
+    it('should throw FILE_NOT_IN_PROJECT when file is not part of the project', () => {
+      const files = new Map([['/project/src/file.ts', '']]);
+
+      assert.throws(
+        () => {
+          getTsconfig({
+            cwd: '/project',
+            fileName: '/other/directory/file.ts',
+            strict: false,
+            fileExists: (path) => files.has(path),
+            readFile: (path) => files.get(path),
+            readDirectory: createMockReadDirectory(files),
+          });
+        },
+        (error: Error) => {
+          assert.ok(error instanceof CommandError);
+          assert.strictEqual(
+            (error as CommandError).type,
+            COMMAND_ERROR_TYPE.FILE_NOT_IN_PROJECT,
+          );
+          assert.ok(error.message.includes('/other/directory/file.ts'));
+          assert.ok(error.message.includes('/project'));
+          assert.ok(error.message.includes('--tsconfig'));
+          return true;
+        },
+      );
+    });
+  });
+
+  describe('when strict is true', () => {
+    it('should search for tsconfig and return resolvedConfigPath', () => {
+      const files = new Map([
+        [
+          '/project/tsconfig.json',
+          JSON.stringify({
+            compilerOptions: {},
+            include: ['src/**/*'],
+          }),
+        ],
+        ['/project/src/file.ts', ''],
+      ]);
+
+      const result = getTsconfig({
+        cwd: '/project',
+        fileName: '/project/src/file.ts',
+        strict: true,
+        fileExists: (path) => files.has(path),
+        readFile: (path) => files.get(path),
+        readDirectory: createMockReadDirectory(files),
+      });
+
+      assert.ok(result.resolvedConfigPath);
+      assert.strictEqual(result.resolvedConfigPath, '/project/tsconfig.json');
+    });
+
+    it('should search for tsconfig with references and return resolvedConfigPath', () => {
+      const files = new Map([
+        [
+          '/project/tsconfig.json',
+          JSON.stringify({
+            include: [],
+            references: [{ path: './tsconfig.lib.json' }],
+          }),
+        ],
+        [
+          '/project/tsconfig.lib.json',
+          JSON.stringify({
+            compilerOptions: {},
+            include: ['lib/**/*'],
+          }),
+        ],
+        ['/project/lib/util.ts', ''],
+      ]);
+
+      const result = getTsconfig({
+        cwd: '/project',
+        fileName: '/project/lib/util.ts',
+        strict: true,
+        fileExists: (path) => files.has(path),
+        readFile: (path) => files.get(path),
+        readDirectory: createMockReadDirectory(files),
+      });
+
+      assert.ok(result.resolvedConfigPath);
+      assert.strictEqual(
+        result.resolvedConfigPath,
+        '/project/tsconfig.lib.json',
+      );
+    });
+  });
+
+  describe('when tsconfig is set', () => {
+    it('should use the provided tsconfig even when strict is false', () => {
+      const files = new Map([
+        [
+          '/project/tsconfig.json',
+          JSON.stringify({
+            compilerOptions: {},
+            include: ['src/**/*'],
+          }),
+        ],
+        [
+          '/project/tsconfig.custom.json',
+          JSON.stringify({
+            compilerOptions: { strict: true },
+            include: ['lib/**/*'],
+          }),
+        ],
+        ['/project/lib/util.ts', ''],
+      ]);
+
+      const result = getTsconfig({
+        cwd: '/project',
+        tsconfig: 'tsconfig.custom.json',
+        fileName: '/project/lib/util.ts',
+        strict: false,
+        fileExists: (path) => files.has(path),
+        readFile: (path) => files.get(path),
+        readDirectory: createMockReadDirectory(files),
+      });
+
+      assert.ok(result.resolvedConfigPath);
+      assert.strictEqual(
+        result.resolvedConfigPath,
+        '/project/tsconfig.custom.json',
+      );
+      // Should have strict: true from the custom tsconfig
+      assert.strictEqual(result.options.strict, true);
     });
   });
 });

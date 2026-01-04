@@ -119,15 +119,15 @@ export const getTsConfigPath = ({
   tsconfig,
   fileName,
   fileExists,
-  readFile = ts.sys.readFile,
-  readDirectory = ts.sys.readDirectory,
+  readFile,
+  readDirectory,
 }: {
   cwd: string;
   tsconfig?: string;
   fileName: string;
   fileExists: (path: string) => boolean;
-  readFile?: (path: string) => string | undefined;
-  readDirectory?: ReadDirectory;
+  readFile: (path: string) => string | undefined;
+  readDirectory: ReadDirectory;
 }): string => {
   if (tsconfig) {
     const absoluteConfigPath = resolve(cwd, tsconfig);
@@ -168,21 +168,58 @@ export const getTsconfig = ({
   cwd,
   tsconfig,
   fileName,
+  strict,
+  fileExists = ts.sys.fileExists,
+  readFile = ts.sys.readFile,
+  readDirectory = ts.sys.readDirectory,
 }: {
   cwd: string;
   tsconfig?: string;
   fileName: string;
+  strict: boolean;
+  fileExists?: (path: string) => boolean;
+  readFile?: (path: string) => string | undefined;
+  readDirectory?: ReadDirectory;
 }) => {
+  if (!strict && !tsconfig) {
+    const { options, fileNames } = ts.parseJsonConfigFileContent(
+      {},
+      {
+        useCaseSensitiveFileNames: true,
+        readFile,
+        fileExists,
+        readDirectory,
+      },
+      cwd,
+    );
+
+    if (!fileNames.includes(fileName)) {
+      throw new CommandError(
+        `${fileName} is not part of project when using default tsconfig options assuming project root: ${cwd}. Hint: use --tsconfig to specify the correct tsconfig file or move to project root directory.`,
+        COMMAND_ERROR_TYPE.FILE_NOT_IN_PROJECT,
+      );
+    }
+
+    return { options, fileNames, resolvedConfigPath: undefined };
+  }
+
   const resolvedConfigPath = getTsConfigPath({
     cwd,
     tsconfig,
     fileName,
-    fileExists: ts.sys.fileExists,
+    fileExists,
+    readFile,
+    readDirectory,
   });
 
   const { options, fileNames } = ts.parseJsonConfigFileContent(
-    ts.readConfigFile(resolvedConfigPath, ts.sys.readFile).config,
-    ts.sys,
+    ts.readConfigFile(resolvedConfigPath, readFile).config,
+    {
+      useCaseSensitiveFileNames: true,
+      readFile,
+      fileExists,
+      readDirectory,
+    },
     dirname(resolvedConfigPath),
   );
 

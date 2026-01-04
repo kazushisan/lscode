@@ -54,6 +54,7 @@ export const setupLanguageService = ({
     cwd,
     tsconfig,
     fileName,
+    strict: false,
   });
 
   const host = createLanguageServiceHost(fileNames, options, cwd);
