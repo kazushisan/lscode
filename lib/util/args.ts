@@ -109,7 +109,7 @@ export const parseMainArgs = (argv: string[]): MainArgs => {
   };
 };
 
-export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
+const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
   const { values, positionals } = parseArgs({
     args: argv,
     options: {
@@ -178,7 +178,7 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
   };
 };
 
-export const parseRenameFileArgs = (argv: string[]): RenameFileArgs => {
+const parseRenameFileArgs = (argv: string[]): RenameFileArgs => {
   const { values, positionals } = parseArgs({
     args: argv,
     options: {
@@ -230,7 +230,7 @@ export const parseRenameFileArgs = (argv: string[]): RenameFileArgs => {
   };
 };
 
-export const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
+const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
   const { values, positionals } = parseArgs({
     args: argv,
     options: {
@@ -309,7 +309,7 @@ export const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
   };
 };
 
-export const parseGetDefinitionArgs = (argv: string[]): GetDefinitionArgs => {
+const parseGetDefinitionArgs = (argv: string[]): GetDefinitionArgs => {
   const { values, positionals } = parseArgs({
     args: argv,
     options: {
@@ -376,4 +376,80 @@ export const parseGetDefinitionArgs = (argv: string[]): GetDefinitionArgs => {
     tsconfig: values.tsconfig,
     n,
   };
+};
+
+type Args =
+  | {
+      command: Command;
+      help: true;
+    }
+  | {
+      type: 'symbol';
+      command:
+        | typeof COMMAND.FIND_REFERENCES
+        | typeof COMMAND.GET_DEFINITION
+        | typeof COMMAND.GET_TYPE_DEFINITION;
+      help: false;
+      filePath: string;
+      keyword: string;
+      tsconfig?: string;
+      n?: number;
+    }
+  | {
+      type: 'symbol';
+      command: typeof COMMAND.RENAME_SYMBOL;
+      help: false;
+      filePath: string;
+      keyword: string;
+      tsconfig?: string;
+      n?: number;
+      newName: string;
+    }
+  | {
+      type: 'file';
+      command: typeof COMMAND.RENAME_FILE;
+      help: false;
+      filePath: string;
+      newFilePath: string;
+      tsconfig?: string;
+    };
+
+export const parseSubcommandArgs = (
+  command: Command,
+  commandArgs: string[],
+): Args => {
+  switch (command) {
+    case COMMAND.FIND_REFERENCES: {
+      const args = parseFindReferencesArgs(commandArgs);
+      if ('help' in args) {
+        return { help: true, command };
+      }
+      return { type: 'symbol', help: false, command, ...args };
+    }
+    case COMMAND.GET_DEFINITION:
+    case COMMAND.GET_TYPE_DEFINITION: {
+      const args = parseGetDefinitionArgs(commandArgs);
+      if ('help' in args) {
+        return { help: true, command };
+      }
+      return { type: 'symbol', help: false, command, ...args };
+    }
+    case COMMAND.RENAME_SYMBOL: {
+      const args = parseRenameSymbolArgs(commandArgs);
+      if ('help' in args) {
+        return { help: true, command };
+      }
+      return { type: 'symbol', help: false, command, ...args };
+    }
+    case COMMAND.RENAME_FILE: {
+      const args = parseRenameFileArgs(commandArgs);
+      if ('help' in args) {
+        return { help: true, command };
+      }
+      return { type: 'file', help: false, command, ...args };
+    }
+    default: {
+      throw new Error(`Unknown command: ${command satisfies never}`);
+    }
+  }
 };

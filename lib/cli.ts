@@ -1,39 +1,33 @@
 #! /usr/bin/env node
-import { resolve } from 'node:path';
 import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import ts from 'typescript';
+import { parseMainArgs, parseSubcommandArgs } from './util/args.js';
+import { COMMAND } from './util/command.js';
+import { applyEdits } from './util/edit.js';
+import { ArgsError, COMMAND_ERROR_TYPE, CommandError } from './util/error.js';
 import { findReferences } from './util/findReferences.js';
-import { setupLanguageService } from './util/languageService.js';
-import { resolveSymbol } from './util/symbol.js';
-import { getDefinition, OPERATION } from './util/getDefinition.js';
-import { renameSymbol } from './util/renameSymbol.js';
-import { renameFile } from './util/renameFile.js';
-import { ArgsError, CommandError, COMMAND_ERROR_TYPE } from './util/error.js';
-import {
-  parseMainArgs,
-  parseFindReferencesArgs,
-  parseGetDefinitionArgs,
-  parseRenameSymbolArgs,
-  parseRenameFileArgs,
-} from './util/args.js';
-import {
-  MAIN_HELP,
-  FIND_REFERENCES_HELP,
-  GET_DEFINITION_HELP,
-  GET_TYPE_DEFINITION_HELP,
-  RENAME_SYMBOL_HELP,
-  RENAME_FILE_HELP,
-} from './util/help.js';
-import { COMMAND, Command } from './util/command.js';
 import {
   formatFindReferences,
   formatGetDefinition,
   formatGetTsconfig,
   formatSymbolsInfo,
 } from './util/format.js';
-import { applyEdits } from './util/edit.js';
-import ts from 'typescript';
+import { getDefinition, OPERATION } from './util/getDefinition.js';
+import {
+  FIND_REFERENCES_HELP,
+  GET_DEFINITION_HELP,
+  GET_TYPE_DEFINITION_HELP,
+  getSubcommandHelp,
+  MAIN_HELP,
+  RENAME_FILE_HELP,
+  RENAME_SYMBOL_HELP,
+} from './util/help.js';
+import { setupLanguageService } from './util/languageService.js';
+import { renameFile } from './util/renameFile.js';
+import { renameSymbol } from './util/renameSymbol.js';
+import { resolveSymbol } from './util/symbol.js';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -50,96 +44,6 @@ const checkFileExists = (fileName: string) => {
       `Failed to read file: ${fileName}`,
       COMMAND_ERROR_TYPE.FILE_NOT_FOUND,
     );
-  }
-};
-
-type Args =
-  | {
-      command: Command;
-      help: true;
-    }
-  | {
-      type: 'symbol';
-      command:
-        | typeof COMMAND.FIND_REFERENCES
-        | typeof COMMAND.GET_DEFINITION
-        | typeof COMMAND.GET_TYPE_DEFINITION;
-      help: false;
-      filePath: string;
-      keyword: string;
-      tsconfig?: string;
-      n?: number;
-    }
-  | {
-      type: 'symbol';
-      command: typeof COMMAND.RENAME_SYMBOL;
-      help: false;
-      filePath: string;
-      keyword: string;
-      tsconfig?: string;
-      n?: number;
-      newName: string;
-    }
-  | {
-      type: 'file';
-      command: typeof COMMAND.RENAME_FILE;
-      help: false;
-      filePath: string;
-      newFilePath: string;
-      tsconfig?: string;
-    };
-
-const parseArgs = (command: Command, commandArgs: string[]): Args => {
-  switch (command) {
-    case COMMAND.FIND_REFERENCES: {
-      const args = parseFindReferencesArgs(commandArgs);
-      if ('help' in args) {
-        return { help: true, command };
-      }
-      return { type: 'symbol', help: false, command, ...args };
-    }
-    case COMMAND.GET_DEFINITION:
-    case COMMAND.GET_TYPE_DEFINITION: {
-      const args = parseGetDefinitionArgs(commandArgs);
-      if ('help' in args) {
-        return { help: true, command };
-      }
-      return { type: 'symbol', help: false, command, ...args };
-    }
-    case COMMAND.RENAME_SYMBOL: {
-      const args = parseRenameSymbolArgs(commandArgs);
-      if ('help' in args) {
-        return { help: true, command };
-      }
-      return { type: 'symbol', help: false, command, ...args };
-    }
-    case COMMAND.RENAME_FILE: {
-      const args = parseRenameFileArgs(commandArgs);
-      if ('help' in args) {
-        return { help: true, command };
-      }
-      return { type: 'file', help: false, command, ...args };
-    }
-    default: {
-      throw new Error(`Unknown command: ${command satisfies never}`);
-    }
-  }
-};
-
-const getHelpText = (command: Command): string => {
-  switch (command) {
-    case COMMAND.FIND_REFERENCES:
-      return FIND_REFERENCES_HELP;
-    case COMMAND.GET_DEFINITION:
-      return GET_DEFINITION_HELP;
-    case COMMAND.GET_TYPE_DEFINITION:
-      return GET_TYPE_DEFINITION_HELP;
-    case COMMAND.RENAME_SYMBOL:
-      return RENAME_SYMBOL_HELP;
-    case COMMAND.RENAME_FILE:
-      return RENAME_FILE_HELP;
-    default:
-      throw new Error(`Unknown command: ${command satisfies never}`);
   }
 };
 
@@ -165,10 +69,10 @@ const main = () => {
   }
 
   const commandArgs = argv.slice(1);
-  const args = parseArgs(command, commandArgs);
+  const args = parseSubcommandArgs(command, commandArgs);
 
   if (args.help) {
-    console.log(getHelpText(command));
+    console.log(getSubcommandHelp(command));
     return;
   }
 

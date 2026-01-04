@@ -1,3 +1,5 @@
+import { COMMAND, Command } from './command.js';
+
 export const MAIN_HELP = `
 lscode - TypeScript's LanguageService for AI coding agents
 
@@ -111,3 +113,20 @@ Examples:
   lscode rename-file src/utils.ts src/helpers.ts
   lscode rename-file src/utils.ts src/helpers.ts --tsconfig ./tsconfig.json
 `.trim();
+
+export const getSubcommandHelp = (command: Command) => {
+  switch (command) {
+    case COMMAND.FIND_REFERENCES:
+      return FIND_REFERENCES_HELP;
+    case COMMAND.GET_DEFINITION:
+      return GET_DEFINITION_HELP;
+    case COMMAND.GET_TYPE_DEFINITION:
+      return GET_TYPE_DEFINITION_HELP;
+    case COMMAND.RENAME_SYMBOL:
+      return RENAME_SYMBOL_HELP;
+    case COMMAND.RENAME_FILE:
+      return RENAME_FILE_HELP;
+    default:
+      throw new Error(`Unknown command: ${command satisfies never}`);
+  }
+};
