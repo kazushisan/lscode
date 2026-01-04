@@ -66,7 +66,7 @@ type Args =
         | typeof COMMAND.GET_TYPE_DEFINITION;
       help: false;
       filePath: string;
-      symbol: string;
+      keyword: string;
       tsconfig?: string;
       n?: number;
     }
@@ -75,7 +75,7 @@ type Args =
       command: typeof COMMAND.RENAME_SYMBOL;
       help: false;
       filePath: string;
-      symbol: string;
+      keyword: string;
       tsconfig?: string;
       n?: number;
       newName: string;
@@ -193,8 +193,8 @@ const main = () => {
     args.type === 'symbol'
       ? {
           ...args,
-          resolvedSymbol: resolveSymbol({
-            keyword: args.symbol,
+          symbol: resolveSymbol({
+            keyword: args.keyword,
             fileName,
             n: args.n || 0,
             program,
@@ -204,9 +204,9 @@ const main = () => {
 
   switch (prepared.command) {
     case COMMAND.FIND_REFERENCES: {
-      const { symbol } = prepared;
+      const { keyword } = prepared;
       const n = prepared.n || 0;
-      const { declaration, symbolsInfo } = prepared.resolvedSymbol;
+      const { declaration, symbolsInfo } = prepared.symbol;
 
       const { references } = findReferences({
         fileName,
@@ -224,14 +224,14 @@ const main = () => {
           ...formatSymbolsInfo({
             symbols: symbolsInfo,
             cwd,
-            symbol,
+            keyword,
           }),
           ...formatFindReferences({
             references,
             symbols: symbolsInfo,
             n,
             cwd,
-            symbol,
+            keyword,
           }),
         ].join('\n'),
       );
@@ -239,9 +239,9 @@ const main = () => {
     }
     case COMMAND.GET_DEFINITION:
     case COMMAND.GET_TYPE_DEFINITION: {
-      const { symbol } = prepared;
+      const { keyword } = prepared;
       const n = prepared.n || 0;
-      const { declaration, symbolsInfo } = prepared.resolvedSymbol;
+      const { declaration, symbolsInfo } = prepared.symbol;
 
       const { definitions } = getDefinition({
         fileName,
@@ -274,7 +274,7 @@ const main = () => {
           ...formatSymbolsInfo({
             symbols: symbolsInfo,
             cwd,
-            symbol,
+            keyword,
           }),
           ...formatGetDefinition({
             definitions,
@@ -288,7 +288,7 @@ const main = () => {
     }
     case COMMAND.RENAME_SYMBOL: {
       const { newName } = prepared;
-      const { declaration } = prepared.resolvedSymbol;
+      const { declaration } = prepared.symbol;
 
       const { edits } = renameSymbol({
         fileName,

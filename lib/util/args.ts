@@ -21,7 +21,7 @@ type FindReferencesArgs =
     }
   | {
       filePath: string;
-      symbol: string;
+      keyword: string;
       tsconfig?: string;
       n?: number;
     };
@@ -32,7 +32,7 @@ type GetDefinitionArgs =
     }
   | {
       filePath: string;
-      symbol: string;
+      keyword: string;
       tsconfig?: string;
       n?: number;
     };
@@ -43,7 +43,7 @@ type RenameSymbolArgs =
     }
   | {
       filePath: string;
-      symbol: string;
+      keyword: string;
       newName: string;
       tsconfig?: string;
       n?: number;
@@ -152,9 +152,9 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
   }
 
   const filePath = arg.substring(0, hashIndex);
-  const symbol = arg.substring(hashIndex + 1);
+  const keyword = arg.substring(hashIndex + 1);
 
-  if (!filePath || !symbol) {
+  if (!filePath || !keyword) {
     throw new ArgsError(
       'Invalid argument format. Expected: path/to/file.ts#symbol',
       COMMAND.FIND_REFERENCES,
@@ -172,7 +172,7 @@ export const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
 
   return {
     filePath,
-    symbol,
+    keyword,
     tsconfig: values.tsconfig,
     n,
   };
@@ -273,9 +273,9 @@ export const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
   }
 
   const filePath = arg.substring(0, hashIndex);
-  const symbol = arg.substring(hashIndex + 1);
+  const keyword = arg.substring(hashIndex + 1);
 
-  if (!filePath || !symbol) {
+  if (!filePath || !keyword) {
     throw new ArgsError(
       'Invalid argument format. Expected: path/to/file.ts#symbol',
       COMMAND.RENAME_SYMBOL,
@@ -302,7 +302,7 @@ export const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
 
   return {
     filePath,
-    symbol,
+    keyword,
     newName,
     tsconfig: values.tsconfig,
     n,
@@ -352,9 +352,9 @@ export const parseGetDefinitionArgs = (argv: string[]): GetDefinitionArgs => {
   }
 
   const filePath = arg.substring(0, hashIndex);
-  const symbol = arg.substring(hashIndex + 1);
+  const keyword = arg.substring(hashIndex + 1);
 
-  if (!filePath || !symbol) {
+  if (!filePath || !keyword) {
     throw new ArgsError(
       'Invalid argument format. Expected: path/to/file.ts#symbol',
       COMMAND.GET_DEFINITION,
@@ -372,7 +372,7 @@ export const parseGetDefinitionArgs = (argv: string[]): GetDefinitionArgs => {
 
   return {
     filePath,
-    symbol,
+    keyword,
     tsconfig: values.tsconfig,
     n,
   };
