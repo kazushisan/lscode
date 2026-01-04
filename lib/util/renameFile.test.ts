@@ -16,6 +16,7 @@ describe('renameFile function', () => {
       const { service } = setupLanguageService({
         cwd: fixturesDir,
         fileName: mathFile,
+        strict: false,
       });
       const { edits } = renameFile({
         fileName: mathFile,
@@ -81,6 +82,7 @@ export const scoped = () => {
       const { service } = setupLanguageService({
         cwd: fixturesDir,
         fileName: mainFile,
+        strict: false,
       });
       const { edits } = renameFile({
         fileName: mainFile,
@@ -126,6 +128,7 @@ calculate();
       const { service } = setupLanguageService({
         cwd: fixturesDir,
         fileName: mathFile,
+        strict: false,
       });
       const { edits } = renameFile({
         fileName: mathFile,
@@ -191,6 +194,7 @@ export const scoped = () => {
       const { service } = setupLanguageService({
         cwd: fixturesDir,
         fileName: mathFile,
+        strict: false,
       });
       const { edits } = renameFile({
         fileName: mathFile,
@@ -217,6 +221,7 @@ export const scoped = () => {
       const { service } = setupLanguageService({
         cwd: fixturesDir,
         fileName: mathFile,
+        strict: false,
       });
       const { edits } = renameFile({
         fileName: mathFile,
@@ -236,6 +241,7 @@ export const scoped = () => {
       const { service } = setupLanguageService({
         cwd: fixturesDir,
         fileName: mathFile,
+        strict: false,
       });
       const { edits } = renameFile({
         fileName: mathFile,

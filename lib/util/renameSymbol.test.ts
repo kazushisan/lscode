@@ -11,6 +11,7 @@ const setup = (fileName: string, keyword: string, n = 0) => {
   const { service } = setupLanguageService({
     cwd: fixturesDir,
     fileName,
+    strict: false,
   });
 
   const program = service.getProgram()!;

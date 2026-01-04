@@ -22,6 +22,7 @@ type SymbolCommandArgs =
       keyword: string;
       tsconfig?: string;
       n?: number;
+      strict: boolean;
     };
 
 type RenameSymbolArgs =
@@ -32,6 +33,7 @@ type RenameSymbolArgs =
       tsconfig?: string;
       n?: number;
       newName: string;
+      strict: boolean;
     };
 
 type RenameFileArgs =
@@ -42,6 +44,7 @@ type RenameFileArgs =
       filePath: string;
       newFilePath: string;
       tsconfig?: string;
+      strict: boolean;
     };
 
 export const parseMainArgs = (argv: string[]): MainArgs => {
@@ -151,6 +154,9 @@ const parseSymbolCommandArgs = (
         type: 'string',
         short: 'n',
       },
+      strict: {
+        type: 'boolean',
+      },
     },
     allowPositionals: true,
   });
@@ -174,6 +180,7 @@ const parseSymbolCommandArgs = (
     keyword,
     tsconfig: values.tsconfig,
     n,
+    strict: values.strict ?? false,
   };
 };
 
@@ -187,6 +194,9 @@ const parseRenameFileArgs = (argv: string[]): RenameFileArgs => {
       },
       tsconfig: {
         type: 'string',
+      },
+      strict: {
+        type: 'boolean',
       },
     },
     allowPositionals: true,
@@ -226,6 +236,7 @@ const parseRenameFileArgs = (argv: string[]): RenameFileArgs => {
     filePath,
     newFilePath,
     tsconfig: values.tsconfig,
+    strict: values.strict ?? false,
   };
 };
 
@@ -243,6 +254,9 @@ const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
       n: {
         type: 'string',
         short: 'n',
+      },
+      strict: {
+        type: 'boolean',
       },
     },
     allowPositionals: true,
@@ -280,6 +294,7 @@ const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
     newName,
     tsconfig: values.tsconfig,
     n,
+    strict: values.strict ?? false,
   };
 };
 
@@ -299,6 +314,7 @@ type Args =
       keyword: string;
       tsconfig?: string;
       n: number;
+      strict: boolean;
     }
   | {
       type: 'symbol';
@@ -309,6 +325,7 @@ type Args =
       tsconfig?: string;
       n: number;
       newName: string;
+      strict: boolean;
     }
   | {
       type: 'file';
@@ -317,6 +334,7 @@ type Args =
       filePath: string;
       newFilePath: string;
       tsconfig?: string;
+      strict: boolean;
     };
 
 export const parseSubcommandArgs = (
@@ -339,6 +357,7 @@ export const parseSubcommandArgs = (
         keyword: args.keyword,
         tsconfig: args.tsconfig,
         n: args.n || 0,
+        strict: args.strict,
       };
     }
     case COMMAND.RENAME_SYMBOL: {
@@ -355,6 +374,7 @@ export const parseSubcommandArgs = (
         tsconfig: args.tsconfig,
         n: args.n || 0,
         newName: args.newName,
+        strict: args.strict,
       };
     }
     case COMMAND.RENAME_FILE: {
@@ -369,6 +389,7 @@ export const parseSubcommandArgs = (
         filePath: args.filePath,
         newFilePath: args.newFilePath,
         tsconfig: args.tsconfig,
+        strict: args.strict,
       };
     }
     default: {

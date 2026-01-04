@@ -119,16 +119,16 @@ export const getTsConfigPath = ({
   tsconfig,
   fileName,
   fileExists,
-  readFile = ts.sys.readFile,
-  readDirectory = ts.sys.readDirectory,
+  readFile,
+  readDirectory,
 }: {
   cwd: string;
   tsconfig?: string;
   fileName: string;
   fileExists: (path: string) => boolean;
-  readFile?: (path: string) => string | undefined;
-  readDirectory?: ReadDirectory;
-}): string | undefined => {
+  readFile: (path: string) => string | undefined;
+  readDirectory: ReadDirectory;
+}): string => {
   if (tsconfig) {
     const absoluteConfigPath = resolve(cwd, tsconfig);
 
@@ -145,7 +145,10 @@ export const getTsConfigPath = ({
   const defaultConfigPath = resolve(cwd, 'tsconfig.json');
 
   if (!fileExists(defaultConfigPath)) {
-    return undefined;
+    throw new CommandError(
+      `TypeScript config file not found: tsconfig.json`,
+      COMMAND_ERROR_TYPE.TSCONFIG_NOT_FOUND,
+    );
   }
 
   // Find the tsconfig that includes the fileName by traversing from the default config
@@ -165,42 +168,67 @@ export const getTsconfig = ({
   cwd,
   tsconfig,
   fileName,
+  strict,
+  fileExists = ts.sys.fileExists,
+  readFile = ts.sys.readFile,
+  readDirectory = ts.sys.readDirectory,
 }: {
   cwd: string;
   tsconfig?: string;
   fileName: string;
+  strict: boolean;
+  fileExists?: (path: string) => boolean;
+  readFile?: (path: string) => string | undefined;
+  readDirectory?: ReadDirectory;
 }) => {
-  const resolvedConfigPath = getTsConfigPath({
-    cwd,
-    tsconfig,
-    fileName,
-    fileExists: ts.sys.fileExists,
-  });
+  if (!strict && !tsconfig) {
+    const { options, fileNames } = ts.parseJsonConfigFileContent(
+      {},
+      {
+        useCaseSensitiveFileNames: true,
+        readFile,
+        fileExists,
+        readDirectory,
+      },
+      cwd,
+    );
 
-  const { options, fileNames } = ts.parseJsonConfigFileContent(
-    resolvedConfigPath
-      ? ts.readConfigFile(resolvedConfigPath, ts.sys.readFile).config
-      : {},
-    ts.sys,
-    resolvedConfigPath ? dirname(resolvedConfigPath) : cwd,
-  );
-
-  if (!fileNames.includes(fileName)) {
-    if (resolvedConfigPath) {
+    if (!fileNames.includes(fileName)) {
       throw new CommandError(
-        `${fileName} is not part of the TypeScript project ${resolve(cwd, resolvedConfigPath)}. Hint: use --tsconfig to specify the correct tsconfig file.`,
+        `${fileName} is not part of project when using default tsconfig options assuming project root: ${cwd}. Hint: use --tsconfig to specify the correct tsconfig file or move to project root directory.`,
         COMMAND_ERROR_TYPE.FILE_NOT_IN_PROJECT,
       );
     }
 
-    // when does this happen?
+    return { options, fileNames, resolvedConfigPath: undefined };
+  }
+
+  const resolvedConfigPath = getTsConfigPath({
+    cwd,
+    tsconfig,
+    fileName,
+    fileExists,
+    readFile,
+    readDirectory,
+  });
+
+  const { options, fileNames } = ts.parseJsonConfigFileContent(
+    ts.readConfigFile(resolvedConfigPath, readFile).config,
+    {
+      useCaseSensitiveFileNames: true,
+      readFile,
+      fileExists,
+      readDirectory,
+    },
+    dirname(resolvedConfigPath),
+  );
+
+  if (!fileNames.includes(fileName)) {
     throw new CommandError(
-      `Could not find a TypeScript project for ${fileName} (no matching 
-      tsconfig found). Attempted to use default compiler options with cwd,
-       but ${fileName} is not included.`,
+      `${fileName} is not part of the TypeScript project ${resolve(cwd, resolvedConfigPath)}. Hint: use --tsconfig to specify the correct tsconfig file.`,
       COMMAND_ERROR_TYPE.FILE_NOT_IN_PROJECT,
     );
   }
 
-  return { options, fileNames, resolvedConfigPath: resolvedConfigPath };
+  return { options, fileNames, resolvedConfigPath };
 };
