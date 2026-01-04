@@ -77,6 +77,7 @@ const main = () => {
     cwd,
     tsconfig: args.tsconfig,
     fileName,
+    strict: args.strict,
   });
 
   const program = service.getProgram();

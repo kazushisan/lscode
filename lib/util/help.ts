@@ -1,5 +1,13 @@
 import { COMMAND, Command } from './command.js';
 
+const TSCONFIG_OPTION_HELP = `--tsconfig <path>               Path to tsconfig.json file. When specified, uses
+                                  the provided tsconfig regardless of --strict`;
+
+const STRICT_OPTION_HELP = `--strict                        Search for and require tsconfig.json. Without this
+                                  flag, default TypeScript options are used and no
+                                  tsconfig search is performed. Use this to limit
+                                  analysis to project scope`;
+
 export const MAIN_HELP = `
 lscode - TypeScript's LanguageService for AI coding agents
 
@@ -29,13 +37,15 @@ Arguments:
 
 Options:
   -n <number>                     Index of the symbol to use (default: 0)
-  --tsconfig <path>               Path to tsconfig.json file
+  ${TSCONFIG_OPTION_HELP}
+  ${STRICT_OPTION_HELP}
   --help, -h                      Show help
 
 Examples:
   lscode find-references src/main.ts#myFunction
   lscode find-references src/main.ts#myFunction --tsconfig ./tsconfig.json
   lscode find-references src/main.ts#myFunction -n 1
+  lscode find-references src/main.ts#myFunction --strict
 `.trim();
 
 const GET_DEFINITION_HELP = `
@@ -48,13 +58,15 @@ Arguments:
 
 Options:
   -n <number>                     Index of the symbol to use (default: 0)
-  --tsconfig <path>               Path to tsconfig.json file
+  ${TSCONFIG_OPTION_HELP}
+  ${STRICT_OPTION_HELP}
   --help, -h                      Show help
 
 Examples:
   lscode get-definition src/main.ts#myFunction
   lscode get-definition src/main.ts#myFunction --tsconfig ./tsconfig.json
   lscode get-definition src/main.ts#myFunction -n 1
+  lscode get-definition src/main.ts#myFunction --strict
 `.trim();
 
 const GET_TYPE_DEFINITION_HELP = `
@@ -67,13 +79,15 @@ Arguments:
 
 Options:
   -n <number>                     Index of the symbol to use (default: 0)
-  --tsconfig <path>               Path to tsconfig.json file
+  ${TSCONFIG_OPTION_HELP}
+  ${STRICT_OPTION_HELP}
   --help, -h                      Show help
 
 Examples:
   lscode get-type-definition src/main.ts#myVariable
   lscode get-type-definition src/main.ts#myVariable --tsconfig ./tsconfig.json
   lscode get-type-definition src/main.ts#myVariable -n 1
+  lscode get-type-definition src/main.ts#myVariable --strict
 `.trim();
 
 const RENAME_SYMBOL_HELP = `
@@ -87,13 +101,15 @@ Arguments:
 
 Options:
   -n <number>                     Index of the symbol to use (default: 0)
-  --tsconfig <path>               Path to tsconfig.json file
+  ${TSCONFIG_OPTION_HELP}
+  ${STRICT_OPTION_HELP}
   --help, -h                      Show help
 
 Examples:
   lscode rename-symbol src/main.ts#myFunction newFunctionName
   lscode rename-symbol src/main.ts#myFunction newFunctionName --tsconfig ./tsconfig.json
   lscode rename-symbol src/main.ts#myFunction newFunctionName -n 1
+  lscode rename-symbol src/main.ts#myFunction newFunctionName --strict
 `.trim();
 
 const RENAME_FILE_HELP = `
@@ -106,12 +122,14 @@ Arguments:
   <newFile>                      New path for the file
 
 Options:
-  --tsconfig <path>               Path to tsconfig.json file
+  ${TSCONFIG_OPTION_HELP}
+  ${STRICT_OPTION_HELP}
   --help, -h                      Show help
 
 Examples:
   lscode rename-file src/utils.ts src/helpers.ts
   lscode rename-file src/utils.ts src/helpers.ts --tsconfig ./tsconfig.json
+  lscode rename-file src/utils.ts src/helpers.ts --strict
 `.trim();
 
 export const getSubcommandHelp = (command: Command) => {

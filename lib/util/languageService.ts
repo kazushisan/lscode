@@ -45,16 +45,18 @@ export const setupLanguageService = ({
   cwd,
   tsconfig,
   fileName, // used for finding tsconfig
+  strict,
 }: {
   cwd: string;
   tsconfig?: string;
   fileName: string;
+  strict: boolean;
 }) => {
   const { options, fileNames, resolvedConfigPath } = getTsconfig({
     cwd,
     tsconfig,
     fileName,
-    strict: false,
+    strict,
   });
 
   const host = createLanguageServiceHost(fileNames, options, cwd);
