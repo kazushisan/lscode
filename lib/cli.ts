@@ -15,15 +15,7 @@ import {
   formatSymbolsInfo,
 } from './util/format.js';
 import { getDefinition, OPERATION } from './util/getDefinition.js';
-import {
-  FIND_REFERENCES_HELP,
-  GET_DEFINITION_HELP,
-  GET_TYPE_DEFINITION_HELP,
-  getSubcommandHelp,
-  MAIN_HELP,
-  RENAME_FILE_HELP,
-  RENAME_SYMBOL_HELP,
-} from './util/help.js';
+import { getSubcommandHelp, MAIN_HELP } from './util/help.js';
 import { setupLanguageService } from './util/languageService.js';
 import { renameFile } from './util/renameFile.js';
 import { renameSymbol } from './util/renameSymbol.js';
@@ -246,27 +238,7 @@ try {
 } catch (error) {
   if (error instanceof ArgsError) {
     console.error(`Error: ${error.message}`);
-    switch (error.command) {
-      case COMMAND.FIND_REFERENCES:
-        console.log(FIND_REFERENCES_HELP);
-        break;
-      case COMMAND.GET_DEFINITION:
-        console.log(GET_DEFINITION_HELP);
-        break;
-      case COMMAND.GET_TYPE_DEFINITION:
-        console.log(GET_TYPE_DEFINITION_HELP);
-        break;
-      case COMMAND.RENAME_SYMBOL:
-        console.log(RENAME_SYMBOL_HELP);
-        break;
-      case COMMAND.RENAME_FILE:
-        console.log(RENAME_FILE_HELP);
-        break;
-      default:
-        throw new Error(
-          `Unknown command in ArgsError: ${error.command satisfies never}`,
-        );
-    }
+    console.log(getSubcommandHelp(error.command));
     process.exit(1);
   }
 
