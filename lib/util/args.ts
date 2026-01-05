@@ -25,6 +25,17 @@ type SymbolCommandArgs =
       strict: boolean;
     };
 
+type FindReferencesArgs =
+  | { help: true }
+  | {
+      filePath: string;
+      keyword: string;
+      tsconfig?: string;
+      n?: number;
+      strict: boolean;
+      context: number;
+    };
+
 type RenameSymbolArgs =
   | { help: true }
   | {
@@ -240,6 +251,69 @@ const parseRenameFileArgs = (argv: string[]): RenameFileArgs => {
   };
 };
 
+const parseFindReferencesArgs = (argv: string[]): FindReferencesArgs => {
+  const { values, positionals } = parseArgs({
+    args: argv,
+    options: {
+      help: {
+        type: 'boolean',
+        short: 'h',
+      },
+      tsconfig: {
+        type: 'string',
+      },
+      n: {
+        type: 'string',
+        short: 'n',
+      },
+      strict: {
+        type: 'boolean',
+      },
+      context: {
+        type: 'string',
+        short: 'c',
+      },
+    },
+    allowPositionals: true,
+  });
+
+  if (values.help) {
+    return { help: true };
+  }
+
+  if (positionals.length === 0) {
+    throw new ArgsError(
+      'Missing required argument <file#symbol>',
+      COMMAND.FIND_REFERENCES,
+    );
+  }
+
+  const { filePath, keyword, n } = extractSymbolCommandArgs(
+    positionals[0]!,
+    values.n,
+    COMMAND.FIND_REFERENCES,
+  );
+
+  const context =
+    values.context !== undefined ? parseInt(values.context, 10) : 3;
+
+  if (isNaN(context) || context < 0) {
+    throw new ArgsError(
+      'Invalid value for --context option. Expected a non-negative integer.',
+      COMMAND.FIND_REFERENCES,
+    );
+  }
+
+  return {
+    filePath,
+    keyword,
+    tsconfig: values.tsconfig,
+    n,
+    strict: values.strict ?? false,
+    context,
+  };
+};
+
 const parseRenameSymbolArgs = (argv: string[]): RenameSymbolArgs => {
   const { values, positionals } = parseArgs({
     args: argv,
@@ -305,8 +379,18 @@ type Args =
     }
   | {
       type: 'symbol';
+      command: typeof COMMAND.FIND_REFERENCES;
+      help: false;
+      filePath: string;
+      keyword: string;
+      tsconfig?: string;
+      n: number;
+      strict: boolean;
+      context: number;
+    }
+  | {
+      type: 'symbol';
       command:
-        | typeof COMMAND.FIND_REFERENCES
         | typeof COMMAND.GET_DEFINITION
         | typeof COMMAND.GET_TYPE_DEFINITION
         | typeof COMMAND.QUICK_INFO;
@@ -343,7 +427,23 @@ export const parseSubcommandArgs = (
   commandArgs: string[],
 ): Args => {
   switch (command) {
-    case COMMAND.FIND_REFERENCES:
+    case COMMAND.FIND_REFERENCES: {
+      const args = parseFindReferencesArgs(commandArgs);
+      if ('help' in args) {
+        return { help: true, command };
+      }
+      return {
+        type: 'symbol',
+        help: false,
+        command,
+        filePath: args.filePath,
+        keyword: args.keyword,
+        tsconfig: args.tsconfig,
+        n: args.n || 0,
+        strict: args.strict,
+        context: args.context,
+      };
+    }
     case COMMAND.GET_DEFINITION:
     case COMMAND.GET_TYPE_DEFINITION:
     case COMMAND.QUICK_INFO: {
