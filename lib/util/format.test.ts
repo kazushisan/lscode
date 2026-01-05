@@ -39,7 +39,6 @@ describe('formatGetTsconfig function', () => {
     const result = formatGetTsconfig({
       resolvedConfigPath: path.join(fixturesDir, 'tsconfig.json'),
       cwd: fixturesDir,
-      fileName: path.join(fixturesDir, 'main.ts'),
     });
 
     assert.strictEqual(result.length, 1);
@@ -53,7 +52,6 @@ describe('formatGetTsconfig function', () => {
     const result = formatGetTsconfig({
       resolvedConfigPath: path.join(fixturesDir, 'tsconfig.json'),
       cwd: process.cwd(),
-      fileName: path.join(fixturesDir, 'main.ts'),
     });
 
     assert.strictEqual(result.length, 1);
@@ -63,18 +61,16 @@ describe('formatGetTsconfig function', () => {
     );
   });
 
-  it('should return warning when resolvedConfigPath is undefined', () => {
-    const fileName = path.join(fixturesDir, 'main.ts');
+  it('should return info message when resolvedConfigPath is undefined', () => {
     const result = formatGetTsconfig({
       resolvedConfigPath: undefined,
       cwd: fixturesDir,
-      fileName,
     });
 
     assert.strictEqual(result.length, 1);
     assert.strictEqual(
       result[0],
-      `[${styleText('yellow', 'warning')}] Could not find a TypeScript project for main.ts (no matching tsconfig found). Using default compiler options with cwd.`,
+      `[${styleText('blue', 'info')}] using default compiler options`,
     );
   });
 });
