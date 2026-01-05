@@ -115,7 +115,6 @@ const main = () => {
           ...formatGetTsconfig({
             resolvedConfigPath,
             cwd,
-            fileName,
           }),
           ...formatSymbolsInfo({
             symbols: symbolsInfo,
@@ -164,7 +163,6 @@ const main = () => {
           ...formatGetTsconfig({
             resolvedConfigPath,
             cwd,
-            fileName,
           }),
           ...formatSymbolsInfo({
             symbols: symbolsInfo,
@@ -195,7 +193,6 @@ const main = () => {
       formatGetTsconfig({
         resolvedConfigPath,
         cwd,
-        fileName,
       }).forEach((line) => console.log(line));
 
       applyEdits(edits);
@@ -213,7 +210,6 @@ const main = () => {
       formatGetTsconfig({
         resolvedConfigPath,
         cwd,
-        fileName,
       }).forEach((line) => console.log(line));
 
       // Apply file edits - handle both writes and deletions
