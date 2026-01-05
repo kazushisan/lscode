@@ -17,6 +17,7 @@ Commands:
   find-references <file#symbol>           Find all references to a symbol in a file
   get-definition <file#symbol>            Get the definition of a symbol in a file
   get-type-definition <file#symbol>       Get the type definition of a symbol in a file
+  quick-info <file#symbol>                Get quick info (type and documentation) for a symbol
   rename-symbol <file#symbol> <newName>   Rename a symbol across all files
   rename-file <file> <newFile>            Rename a file and update all imports
 
@@ -112,6 +113,27 @@ Examples:
   lscode rename-symbol src/main.ts#myFunction newFunctionName --strict
 `.trim();
 
+const QUICK_INFO_HELP = `
+lscode quick-info - Get quick info (type and documentation) for a symbol
+
+Usage: lscode quick-info <file#symbol> [options]
+
+Arguments:
+  <file#symbol>                  File path and symbol in format: path/to/file.ts#symbol
+
+Options:
+  -n <number>                     Index of the symbol to use (default: 0)
+  ${TSCONFIG_OPTION_HELP}
+  ${STRICT_OPTION_HELP}
+  --help, -h                      Show help
+
+Examples:
+  lscode quick-info src/main.ts#myFunction
+  lscode quick-info src/main.ts#myFunction --tsconfig ./tsconfig.json
+  lscode quick-info src/main.ts#myFunction -n 1
+  lscode quick-info src/main.ts#myFunction --strict
+`.trim();
+
 const RENAME_FILE_HELP = `
 lscode rename-file - Rename a file and update all imports
 
@@ -140,6 +162,8 @@ export const getSubcommandHelp = (command: Command) => {
       return GET_DEFINITION_HELP;
     case COMMAND.GET_TYPE_DEFINITION:
       return GET_TYPE_DEFINITION_HELP;
+    case COMMAND.QUICK_INFO:
+      return QUICK_INFO_HELP;
     case COMMAND.RENAME_SYMBOL:
       return RENAME_SYMBOL_HELP;
     case COMMAND.RENAME_FILE:

@@ -308,7 +308,8 @@ type Args =
       command:
         | typeof COMMAND.FIND_REFERENCES
         | typeof COMMAND.GET_DEFINITION
-        | typeof COMMAND.GET_TYPE_DEFINITION;
+        | typeof COMMAND.GET_TYPE_DEFINITION
+        | typeof COMMAND.QUICK_INFO;
       help: false;
       filePath: string;
       keyword: string;
@@ -344,7 +345,8 @@ export const parseSubcommandArgs = (
   switch (command) {
     case COMMAND.FIND_REFERENCES:
     case COMMAND.GET_DEFINITION:
-    case COMMAND.GET_TYPE_DEFINITION: {
+    case COMMAND.GET_TYPE_DEFINITION:
+    case COMMAND.QUICK_INFO: {
       const args = parseSymbolCommandArgs(commandArgs, command);
       if ('help' in args) {
         return { help: true, command };
