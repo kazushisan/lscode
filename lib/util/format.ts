@@ -142,6 +142,36 @@ interface DefinitionLocation {
   code: string;
 }
 
+export const formatQuickInfo = ({
+  quickInfo,
+  symbols,
+  n,
+  cwd,
+}: {
+  quickInfo: string;
+  symbols: SymbolInfo[];
+  n: number;
+  cwd: string;
+}): string[] => {
+  const output: string[] = [];
+
+  if (symbols.length > 0) {
+    const symbolInfo = symbols[n];
+    if (symbolInfo) {
+      const relativePath = relative(cwd, symbolInfo.fileName);
+      output.push(
+        `Quick info shown for symbol #${n} at ${relativePath}:${symbolInfo.line + 1}:${symbolInfo.character + 1}`,
+      );
+    }
+  }
+
+  if (quickInfo) {
+    output.push(quickInfo);
+  }
+
+  return output;
+};
+
 export const formatGetDefinition = ({
   definitions,
   symbols,

@@ -12,11 +12,13 @@ import {
   formatFindReferences,
   formatGetDefinition,
   formatGetTsconfig,
+  formatQuickInfo,
   formatSymbolsInfo,
 } from './util/format.js';
 import { getDefinition, OPERATION } from './util/getDefinition.js';
 import { getSubcommandHelp, MAIN_HELP } from './util/help.js';
 import { setupLanguageService } from './util/languageService.js';
+import { quickInfo } from './util/quickInfo.js';
 import { renameFile } from './util/renameFile.js';
 import { renameSymbol } from './util/renameSymbol.js';
 import { resolveSymbol } from './util/symbol.js';
@@ -127,6 +129,37 @@ const main = () => {
             n: prepared.n,
             cwd,
             keyword,
+          }),
+        ].join('\n'),
+      );
+      break;
+    }
+    case COMMAND.QUICK_INFO: {
+      const { keyword } = prepared;
+      const { declaration, symbolsInfo } = prepared.symbol;
+
+      const info = quickInfo({
+        fileName,
+        declaration,
+        service,
+      });
+
+      console.log(
+        [
+          ...formatGetTsconfig({
+            resolvedConfigPath,
+            cwd,
+          }),
+          ...formatSymbolsInfo({
+            symbols: symbolsInfo,
+            cwd,
+            keyword,
+          }),
+          ...formatQuickInfo({
+            quickInfo: info,
+            symbols: symbolsInfo,
+            n: prepared.n,
+            cwd,
           }),
         ].join('\n'),
       );

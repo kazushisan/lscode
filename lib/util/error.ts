@@ -1,14 +1,9 @@
-type ArgsErrorCommand =
-  | 'find-references'
-  | 'get-definition'
-  | 'get-type-definition'
-  | 'rename-symbol'
-  | 'rename-file';
+import type { Command } from './command.js';
 
 export class ArgsError extends Error {
   constructor(
     message: string,
-    public command: ArgsErrorCommand,
+    public command: Command,
   ) {
     super(message);
     this.name = 'ArgsError';
