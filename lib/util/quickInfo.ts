@@ -102,21 +102,40 @@ const tagsToMarkdown = (tags: ts.JSDocTagInfo[]) => {
     .join('  \n\n');
 };
 
-export const renderQuickInfo = (quickInfo: ts.QuickInfo) => {
+export const quickInfo = ({
+  fileName,
+  declaration,
+  service,
+}: {
+  fileName: string;
+  declaration: ts.Declaration;
+  service: ts.LanguageService;
+}): string => {
+  const position = declaration.getStart();
+  const info = service.getQuickInfoAtPosition(fileName, position);
+
+  if (!info) {
+    return '';
+  }
+
+  return renderQuickInfo(info);
+};
+
+export const renderQuickInfo = (info: ts.QuickInfo) => {
   const parts: string[] = [];
 
-  const displayString = displayPartsToString(quickInfo.displayParts);
+  const displayString = displayPartsToString(info.displayParts);
   if (displayString) {
     parts.push('```ts\n' + displayString + '\n```');
   }
 
-  const documentation = displayPartsToString(quickInfo.documentation);
+  const documentation = displayPartsToString(info.documentation);
   if (documentation) {
     parts.push(documentation);
   }
 
-  if (quickInfo.tags && quickInfo.tags.length > 0) {
-    const tagsMarkdown = tagsToMarkdown(quickInfo.tags);
+  if (info.tags && info.tags.length > 0) {
+    const tagsMarkdown = tagsToMarkdown(info.tags);
     if (tagsMarkdown) {
       parts.push(tagsMarkdown);
     }

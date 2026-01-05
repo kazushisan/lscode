@@ -1,8 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import ts from 'typescript';
-import { renderQuickInfo } from './quickInfo.js';
+import path from 'node:path';
+import { quickInfo, renderQuickInfo } from './quickInfo.js';
 import { resolveSymbol } from './symbol.js';
+import { setupLanguageService } from './languageService.js';
 
 const createMockLanguageService = (
   files: Map<string, string>,
@@ -52,9 +54,9 @@ describe('renderQuickInfo', () => {
 
     const service = createMockLanguageService(files);
     const position = getSymbolPosition(service, '/test.ts', 'myNumber');
-    const quickInfo = service.getQuickInfoAtPosition('/test.ts', position)!;
+    const info = service.getQuickInfoAtPosition('/test.ts', position)!;
 
-    const result = renderQuickInfo(quickInfo);
+    const result = renderQuickInfo(info);
     assert.strictEqual(
       result,
       `\`\`\`ts
@@ -82,9 +84,9 @@ function add(a: number, b: number): number {
 
     const service = createMockLanguageService(files);
     const position = getSymbolPosition(service, '/test.ts', 'add');
-    const quickInfo = service.getQuickInfoAtPosition('/test.ts', position)!;
+    const info = service.getQuickInfoAtPosition('/test.ts', position)!;
 
-    const result = renderQuickInfo(quickInfo);
+    const result = renderQuickInfo(info);
     assert.strictEqual(
       result,
       `\`\`\`ts
@@ -115,9 +117,9 @@ Adds two numbers together
 
     const service = createMockLanguageService(files);
     const position = getSymbolPosition(service, '/test.ts', 'User');
-    const quickInfo = service.getQuickInfoAtPosition('/test.ts', position)!;
+    const info = service.getQuickInfoAtPosition('/test.ts', position)!;
 
-    const result = renderQuickInfo(quickInfo);
+    const result = renderQuickInfo(info);
     assert.strictEqual(
       result,
       `\`\`\`ts
@@ -142,9 +144,9 @@ class Person {
 
     const service = createMockLanguageService(files);
     const position = getSymbolPosition(service, '/test.ts', 'Person');
-    const quickInfo = service.getQuickInfoAtPosition('/test.ts', position)!;
+    const info = service.getQuickInfoAtPosition('/test.ts', position)!;
 
-    const result = renderQuickInfo(quickInfo);
+    const result = renderQuickInfo(info);
     assert.strictEqual(
       result,
       `\`\`\`ts
@@ -162,9 +164,9 @@ Represents a person`,
 
     const service = createMockLanguageService(files);
     const position = getSymbolPosition(service, '/test.ts', 'Status');
-    const quickInfo = service.getQuickInfoAtPosition('/test.ts', position)!;
+    const info = service.getQuickInfoAtPosition('/test.ts', position)!;
 
-    const result = renderQuickInfo(quickInfo);
+    const result = renderQuickInfo(info);
     assert.strictEqual(
       result,
       `\`\`\`ts
@@ -191,9 +193,9 @@ function multiply(a: number, b: number): number {
 
     const service = createMockLanguageService(files);
     const position = getSymbolPosition(service, '/test.ts', 'multiply');
-    const quickInfo = service.getQuickInfoAtPosition('/test.ts', position)!;
+    const info = service.getQuickInfoAtPosition('/test.ts', position)!;
 
-    const result = renderQuickInfo(quickInfo);
+    const result = renderQuickInfo(info);
     assert.strictEqual(
       result,
       `\`\`\`ts
@@ -223,9 +225,9 @@ function oldFunction() {}
 
     const service = createMockLanguageService(files);
     const position = getSymbolPosition(service, '/test.ts', 'oldFunction');
-    const quickInfo = service.getQuickInfoAtPosition('/test.ts', position)!;
+    const info = service.getQuickInfoAtPosition('/test.ts', position)!;
 
-    const result = renderQuickInfo(quickInfo);
+    const result = renderQuickInfo(info);
     assert.strictEqual(
       result,
       `\`\`\`ts
@@ -237,7 +239,7 @@ function oldFunction(): void
   });
 
   it('should return empty string for empty quick info', () => {
-    const quickInfo: ts.QuickInfo = {
+    const emptyInfo: ts.QuickInfo = {
       kind: ts.ScriptElementKind.unknown,
       kindModifiers: '',
       textSpan: { start: 0, length: 0 },
@@ -246,7 +248,81 @@ function oldFunction(): void
       tags: [],
     };
 
-    const result = renderQuickInfo(quickInfo);
+    const result = renderQuickInfo(emptyInfo);
     assert.strictEqual(result, '');
+  });
+});
+
+const fixturesDir = path.join(process.cwd(), 'test/fixtures/basic');
+
+const setup = (fileName: string, keyword: string, n = 0) => {
+  const { service } = setupLanguageService({
+    cwd: fixturesDir,
+    fileName,
+    strict: false,
+  });
+
+  const program = service.getProgram()!;
+
+  const { declaration } = resolveSymbol({
+    keyword,
+    fileName,
+    n,
+    program,
+  });
+
+  return { declaration, service };
+};
+
+describe('quickInfo function', () => {
+  it('should return quick info for the add function in math.ts', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const { declaration, service } = setup(mathFile, 'add');
+    const result = quickInfo({
+      declaration,
+      service,
+      fileName: mathFile,
+    });
+
+    assert.strictEqual(
+      result,
+      `\`\`\`ts
+const add: (a: number, b: number) => number
+\`\`\``,
+    );
+  });
+
+  it('should return quick info for multiply function', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const { declaration, service } = setup(mathFile, 'multiply');
+    const result = quickInfo({
+      declaration,
+      service,
+      fileName: mathFile,
+    });
+
+    assert.strictEqual(
+      result,
+      `\`\`\`ts
+const multiply: (a: number, b: number) => number
+\`\`\``,
+    );
+  });
+
+  it('should return quick info for PI constant', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const { declaration, service } = setup(mathFile, 'PI');
+    const result = quickInfo({
+      declaration,
+      service,
+      fileName: mathFile,
+    });
+
+    assert.strictEqual(
+      result,
+      `\`\`\`ts
+const PI: 3.14159
+\`\`\``,
+    );
   });
 });
