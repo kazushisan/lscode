@@ -77,13 +77,19 @@ export const formatFindReferences = ({
   n,
   cwd,
   keyword,
+  c,
 }: {
   references: Reference[];
   symbols: SymbolInfo[];
   n: number;
   cwd: string;
   keyword: string;
+  c: number;
 }): string[] => {
+  if (c < 0) {
+    throw new Error('c must be 0 or greater');
+  }
+
   const output: string[] = [];
 
   if (symbols.length > 0) {
@@ -127,9 +133,32 @@ export const formatFindReferences = ({
 
     const highlightedSymbol = styleText('green', symbolText);
 
-    output.push(
-      `${location} ${beforeSymbol}${highlightedSymbol}${afterSymbol}`,
-    );
+    if (c === 0) {
+      output.push(
+        `${location} ${beforeSymbol}${highlightedSymbol}${afterSymbol}`,
+      );
+    } else {
+      // c >= 1: show context lines and insert line break after location
+      const startLine = Math.max(0, ref.line - c);
+      const endLine = Math.min(lines.length - 1, ref.line + c);
+
+      output.push(location);
+
+      for (let i = startLine; i <= endLine; i++) {
+        const currentLine = lines[i] || '';
+        if (i === ref.line) {
+          // Highlight the reference line
+          const beforePart = currentLine.substring(0, start);
+          const symbolPart = currentLine.substring(start, end);
+          const afterPart = currentLine.substring(end);
+          output.push(
+            `${beforePart}${styleText('green', symbolPart)}${afterPart}`,
+          );
+        } else {
+          output.push(currentLine);
+        }
+      }
+    }
   });
 
   return output;

@@ -139,6 +139,7 @@ describe('formatFindReferences function', () => {
       n: 0,
       cwd: fixturesDir,
       keyword: 'add',
+      c: 0,
     });
 
     const expected = [
@@ -168,6 +169,7 @@ describe('formatFindReferences function', () => {
       n: 1,
       cwd: fixturesDir,
       keyword: 'add',
+      c: 0,
     });
 
     const expected = [
@@ -193,6 +195,7 @@ describe('formatFindReferences function', () => {
       n: 0,
       cwd: fixturesDir,
       keyword: 'PI',
+      c: 0,
     });
 
     const expected = [
@@ -220,12 +223,172 @@ describe('formatFindReferences function', () => {
       n: 0,
       cwd: fixturesDir,
       keyword: 'multiply',
+      c: 0,
     });
 
     const output = formatted.join('\n');
     assert.ok(output.includes('References shown for symbol #0'));
     assert.ok(output.includes('math.ts'));
     assert.ok(output.includes('main.ts'));
+  });
+
+  it('should format references with c=0 in single line format', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const { declaration, service, fileName, symbolsInfo } = setup(
+      mathFile,
+      'PI',
+    );
+    const { references } = findReferences({ declaration, service, fileName });
+
+    const formatted = formatFindReferences({
+      references,
+      symbols: symbolsInfo,
+      n: 0,
+      cwd: fixturesDir,
+      keyword: 'PI',
+      c: 0,
+    });
+
+    const expected = [
+      'References shown for symbol #0 at math.ts:9:14',
+      `${styleText('gray', 'math.ts:9:14:')} export const ${styleText('green', 'PI')} = 3.14159;`,
+      `${styleText('gray', 'main.ts:1:25:')} import { add, multiply, ${styleText('green', 'PI')} } from './math.js';`,
+      `${styleText('gray', 'main.ts:8:27:')} const circumference = 2 * ${styleText('green', 'PI')} * 10;`,
+      `${styleText('gray', 'main.ts:14:24:')}   return multiply(sum, ${styleText('green', 'PI')});`,
+    ].join('\n');
+
+    assert.strictEqual(formatted.join('\n'), expected);
+  });
+
+  it('should format references with c=1 showing 1 context line before/after with line break', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const { declaration, service, fileName, symbolsInfo } = setup(
+      mathFile,
+      'PI',
+    );
+    const { references } = findReferences({ declaration, service, fileName });
+
+    const formatted = formatFindReferences({
+      references,
+      symbols: symbolsInfo,
+      n: 0,
+      cwd: fixturesDir,
+      keyword: 'PI',
+      c: 1,
+    });
+
+    const expected = [
+      'References shown for symbol #0 at math.ts:9:14',
+      styleText('gray', 'math.ts:9:14:'),
+      '',
+      `export const ${styleText('green', 'PI')} = 3.14159;`,
+      '',
+      styleText('gray', 'main.ts:1:25:'),
+      `import { add, multiply, ${styleText('green', 'PI')} } from './math.js';`,
+      '',
+      styleText('gray', 'main.ts:8:27:'),
+      '',
+      `const circumference = 2 * ${styleText('green', 'PI')} * 10;`,
+      '',
+      styleText('gray', 'main.ts:14:24:'),
+      '  const sum = add(1, 2);',
+      `  return multiply(sum, ${styleText('green', 'PI')});`,
+      '}',
+    ].join('\n');
+
+    assert.strictEqual(formatted.join('\n'), expected);
+  });
+
+  it('should format references with c=2 showing 2 context lines before/after', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const { declaration, service, fileName, symbolsInfo } = setup(
+      mathFile,
+      'PI',
+    );
+    const { references } = findReferences({ declaration, service, fileName });
+
+    const formatted = formatFindReferences({
+      references,
+      symbols: symbolsInfo,
+      n: 0,
+      cwd: fixturesDir,
+      keyword: 'PI',
+      c: 2,
+    });
+
+    const expected = [
+      'References shown for symbol #0 at math.ts:9:14',
+      styleText('gray', 'math.ts:9:14:'),
+      '};',
+      '',
+      `export const ${styleText('green', 'PI')} = 3.14159;`,
+      '',
+      'export const scoped = () => {',
+      styleText('gray', 'main.ts:1:25:'),
+      `import { add, multiply, ${styleText('green', 'PI')} } from './math.js';`,
+      '',
+      'const result1 = add(5, 3);',
+      styleText('gray', 'main.ts:8:27:'),
+      'const product = multiply(4, 7);',
+      '',
+      `const circumference = 2 * ${styleText('green', 'PI')} * 10;`,
+      '',
+      'console.log(result1, result2, product, circumference);',
+      styleText('gray', 'main.ts:14:24:'),
+      'function calculate() {',
+      '  const sum = add(1, 2);',
+      `  return multiply(sum, ${styleText('green', 'PI')});`,
+      '}',
+      '',
+    ].join('\n');
+
+    assert.strictEqual(formatted.join('\n'), expected);
+  });
+
+  it('should handle c parameter at file boundaries gracefully', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const { declaration, service, fileName, symbolsInfo } = setup(
+      mathFile,
+      'add',
+    );
+    const { references } = findReferences({ declaration, service, fileName });
+
+    const formatted = formatFindReferences({
+      references,
+      symbols: symbolsInfo,
+      n: 0,
+      cwd: fixturesDir,
+      keyword: 'add',
+      c: 3,
+    });
+
+    const output = formatted.join('\n');
+
+    assert.ok(output.includes('References shown for symbol #0'));
+    assert.ok(output.includes(styleText('gray', 'math.ts:1:14:')));
+  });
+
+  it('should throw error when c is less than 0', () => {
+    const mathFile = path.join(fixturesDir, 'math.ts');
+    const { declaration, service, fileName, symbolsInfo } = setup(
+      mathFile,
+      'PI',
+    );
+    const { references } = findReferences({ declaration, service, fileName });
+
+    assert.throws(
+      () => {
+        formatFindReferences({
+          references,
+          symbols: symbolsInfo,
+          n: 0,
+          cwd: fixturesDir,
+          keyword: 'PI',
+          c: -1,
+        });
+      },
+      { message: 'c must be 0 or greater' },
+    );
   });
 });
 

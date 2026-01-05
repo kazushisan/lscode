@@ -129,6 +129,7 @@ const main = () => {
             n: prepared.n,
             cwd,
             keyword,
+            c: 1,
           }),
         ].join('\n'),
       );
