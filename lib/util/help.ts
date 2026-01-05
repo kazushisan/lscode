@@ -38,6 +38,8 @@ Arguments:
 
 Options:
   -n <number>                     Index of the symbol to use (default: 0)
+  --context, -c <number>          Number of context lines to show around each
+                                  reference (default: 3)
   ${TSCONFIG_OPTION_HELP}
   ${STRICT_OPTION_HELP}
   --help, -h                      Show help
@@ -47,6 +49,8 @@ Examples:
   lscode find-references src/main.ts#myFunction --tsconfig ./tsconfig.json
   lscode find-references src/main.ts#myFunction -n 1
   lscode find-references src/main.ts#myFunction --strict
+  lscode find-references src/main.ts#myFunction -c 5
+  lscode find-references src/main.ts#myFunction --context 0
 `.trim();
 
 const GET_DEFINITION_HELP = `

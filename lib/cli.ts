@@ -103,7 +103,7 @@ const main = () => {
 
   switch (prepared.command) {
     case COMMAND.FIND_REFERENCES: {
-      const { keyword } = prepared;
+      const { keyword, context } = prepared;
       const { declaration, symbolsInfo } = prepared.symbol;
 
       const { references } = findReferences({
@@ -129,6 +129,7 @@ const main = () => {
             n: prepared.n,
             cwd,
             keyword,
+            c: context,
           }),
         ].join('\n'),
       );
