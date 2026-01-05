@@ -121,6 +121,7 @@ export const quickInfo = ({
   return renderQuickInfo(info);
 };
 
+// tsr-skip used in test
 export const renderQuickInfo = (info: ts.QuickInfo) => {
   const parts: string[] = [];
 
