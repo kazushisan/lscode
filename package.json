@@ -33,7 +33,7 @@
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
-    "typescript": ">=5.0.0"
+    "typescript": ">=5.0.0 <7.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
